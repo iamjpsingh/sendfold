@@ -39,12 +39,22 @@ npm run cf:migrate -w @sendfold/api
 npm run deploy:api
 ```
 
-From `apps/web`, create the Pages project once, then deploy:
+## Git-connected automatic deployment
 
-```sh
-npx wrangler pages project create sendfold --production-branch main
-npm run deploy
-```
+For a new installation, connect the same GitHub repository to **Pages** and **Workers Builds** in Cloudflare. Choose Git integration when creating Pages (a Direct Upload project cannot later be converted).
+
+| Setting | Pages frontend | API Worker |
+| --- | --- | --- |
+| Production branch | `main` | `main` |
+| Root directory | `apps/web` | `/` |
+| Build command | `cd ../.. && npm ci && npm run build -w @sendfold/web` | `npm run check && npm test` |
+| Output directory | `dist` | — |
+| Deploy command | Managed by Pages | `npm run cf:migrate -w @sendfold/api && npm run deploy:api` |
+| Build variables | `NODE_VERSION=22.22.2`, `SKIP_DEPENDENCY_INSTALL=true` | `NODE_VERSION=22.22.2` |
+
+Disable preview deployments until a separate preview database, bucket, and API origin are configured. A Worker build token needs permission to deploy Workers and apply D1 migrations in the selected account; runtime authentication secrets belong in the Worker, not build variables or GitHub.
+
+For a manual frontend release after the Git-connected Pages project exists, set `CLOUDFLARE_ACCOUNT_ID` in your shell and run `npm run deploy:web` from the repository root. Pages configuration does not accept `account_id`; the API Worker configuration does.
 
 The web configuration binds `API` to `sendfold-api`. If either name changes, update the binding. Pages Functions must be included in the deployment; uploading only the static `dist` directory through the dashboard will omit the API proxy.
 
