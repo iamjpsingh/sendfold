@@ -29,15 +29,20 @@ projectsRoutes.get("/api/projects", async (c) => {
       })
       .from(s.projects)
       .where(
-        u.role === "super_admin"
-          ? undefined
-          : inArray(
-              s.projects.id,
-              db
-                .select({ id: s.projectMembers.projectId })
-                .from(s.projectMembers)
-                .where(eq(s.projectMembers.userId, u.id)),
-            ),
+        and(
+          c.env.connector
+            ? inArray(s.projects.id, c.env.connector.projectIds)
+            : undefined,
+          u.role === "super_admin"
+            ? undefined
+            : inArray(
+                s.projects.id,
+                db
+                  .select({ id: s.projectMembers.projectId })
+                  .from(s.projectMembers)
+                  .where(eq(s.projectMembers.userId, u.id)),
+              ),
+        ),
       )
       .orderBy(desc(s.projects.updatedAt))
       .all(),

@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { ConnectionPanel } from "@/features/connectors/connection-panel";
 import {
   Select,
   SelectTrigger,
@@ -100,24 +100,7 @@ export function SettingsPage() {
           </form>
         </CardContent>
       </Card>
-      <Card className="shadow-none">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>AI connectors</CardTitle>
-            <Badge variant="secondary">Planned</Badge>
-          </div>
-          <CardDescription>
-            Connect your project context to the tools you already use.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm leading-6 text-muted-foreground">
-            A future MCP connector will provide permission-scoped access for
-            ChatGPT, Codex, Claude, and Gemini. Connectors are not enabled in
-            this release.
-          </p>
-        </CardContent>
-      </Card>
+      <ConnectionPanel />
     </main>
   );
 }

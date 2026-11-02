@@ -9,9 +9,10 @@ import type { Platform } from "./platform";
 import * as s from "@sendfold/database/schema";
 import { id, digest } from "./security";
 import type { Access } from "@sendfold/shared/types";
+import type { ConnectorPrincipal } from "./connectors/authenticate";
 
 export type Env = {
-  Bindings: { platform: Platform };
+  Bindings: { platform: Platform; connector?: ConnectorPrincipal };
   Variables: { auth: ReturnType<typeof createAuth> };
 };
 export type C = Context<Env>;
@@ -32,9 +33,9 @@ export const role = z.enum(["super_admin", "member"]);
 export const fileLimit = 25 * 1024 * 1024;
 
 export async function currentUser(c: C) {
-  const authSession = await c
-    .get("auth")
-    .api.getSession({ headers: c.req.raw.headers });
+  const authSession = c.env.connector
+    ? { user: { id: c.env.connector.userId } }
+    : await c.get("auth").api.getSession({ headers: c.req.raw.headers });
   if (!authSession) return null;
   const result = await c.env.platform.db
     .select()
@@ -47,6 +48,8 @@ export async function requireUser(c: C) {
   return (await currentUser(c)) ?? fail(401, "Please sign in.");
 }
 export async function requireAdmin(c: C) {
+  if (c.env.connector)
+    fail(403, "Connectors cannot manage installation settings.");
   const u = await requireUser(c);
   if (u.role !== "super_admin") fail(403, "Super admin access is required.");
   return u;
@@ -63,6 +66,9 @@ export async function projectAccess(
       .where(eq(s.projects.id, projectId))
       .get();
   if (!project) fail(404, "Project not found.");
+  const connector = c.env.connector;
+  if (connector && !connector.projectIds.includes(projectId))
+    fail(403, "This project was not approved for this connector.");
   const u = await currentUser(c);
   const membership = u
     ? await db
@@ -81,16 +87,22 @@ export async function projectAccess(
       project,
       access: {
         permission:
-          u.role === "super_admin" || membership?.role !== "viewer"
+          (!connector || connector.allowWrite) &&
+          (u.role === "super_admin" || membership?.role !== "viewer")
             ? "edit"
             : "view",
         allowDownload: true,
-        allowUpload: u.role === "super_admin" || membership?.role !== "viewer",
-        manage: u.role === "super_admin" || membership?.role === "admin",
-        actorKey: `user:${u.id}`,
-        name: u.name,
+        allowUpload:
+          (!connector || connector.allowWrite) &&
+          (u.role === "super_admin" || membership?.role !== "viewer"),
+        manage:
+          (!connector || connector.allowWrite) &&
+          (u.role === "super_admin" || membership?.role === "admin"),
+        actorKey: connector ? `connector:${connector.id}` : `user:${u.id}`,
+        name: connector ? `${u.name} via ${connector.label}` : u.name,
       },
     };
+  if (connector) fail(403, "Your project membership no longer allows access.");
   const token = shareToken ?? c.req.query("share");
   if (!token) fail(u ? 403 : 401, "You do not have access to this project.");
   const share = await db

@@ -85,7 +85,7 @@ HTML previews run in an opaque-origin iframe with network requests restricted. T
 
 Questions and comments are persisted. DOCX/PDF are previewable, not full document editors. Identity supplied by a password guest is self-reported. Closing a guest session and entering again creates a new respondent identity. No transactional email is configured.
 
-MCP connectors for ChatGPT, Codex, Claude, and Gemini are planned; they are not connected or exposed in this version. The API remains separated from storage and UI so scoped connector access can be added later.
+The MCP connector supports OAuth browser authorization and project-scoped, expiring access keys. Manage it in **Settings → AI connectors**. It exposes project context, text-file reading/revisions, feedback and questions. PDF/Office extraction, arbitrary binary uploads through MCP, and real-time subscriptions are not included. See the [connection guide](docs/connectors.md) for ChatGPT, Codex, Claude and Gemini CLI setup and verification limits.
 
 ## License
 

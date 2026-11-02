@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import * as s from "@sendfold/database/schema";
 import { id, digest, equalSecret, throttle } from "../security";
+import { registerClient } from "../connectors/registration";
 import { type Env, fail, json, name, password, requireUser } from "../context";
 export const accountRoutes = new Hono<Env>();
 accountRoutes.get("/api/health", (c) => c.json({ ok: true, app: "sendfold" }));
@@ -69,6 +70,14 @@ accountRoutes.all("/api/auth/*", async (c) => {
       "get-session",
       "change-password",
       "update-user",
+      "jwks",
+      "oauth2/authorize",
+      "oauth2/token",
+      "oauth2/register",
+      "oauth2/revoke",
+      "oauth2/introspect",
+      ".well-known/oauth-authorization-server",
+      ".well-known/openid-configuration",
     ].includes(route)
   )
     fail(
@@ -90,6 +99,23 @@ accountRoutes.all("/api/auth/*", async (c) => {
       .where(eq(s.user.email, String(body.email).toLowerCase()))
       .get();
     if (existing?.disabled) fail(403, "This account is disabled.");
+  }
+  if (route.startsWith("oauth2/")) {
+    await throttle(
+      c.env.platform.db,
+      `oauth:${route}`,
+      route === "oauth2/register" ? 100 : 1500,
+    );
+    if (route === "oauth2/register") return registerClient(c);
+    if (route === "oauth2/authorize") {
+      const url = new URL(c.req.url);
+      const prompts = new Set(
+        (url.searchParams.get("prompt") ?? "").split(" ").filter(Boolean),
+      );
+      if (!prompts.has("none")) prompts.add("consent");
+      url.searchParams.set("prompt", [...prompts].join(" "));
+      return c.get("auth").handler(new Request(url, c.req.raw));
+    }
   }
   return c.get("auth").handler(c.req.raw);
 });

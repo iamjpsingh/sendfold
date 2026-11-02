@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-export function AuthPage() {
+export function AuthPage({ oauthQuery }: { oauthQuery?: string } = {}) {
   const query = useQueryClient(),
     setup = useQuery({
       queryKey: ["setup"],
@@ -36,10 +36,18 @@ export function AuthPage() {
         setCreated(true);
         await query.invalidateQueries({ queryKey: ["setup"] });
       }
-      await post("/auth/sign-in/email", {
-        email: values.email,
-        password: values.password,
-      });
+      const result = await post<{ redirect?: boolean; url?: string }>(
+        "/auth/sign-in/email",
+        {
+          email: values.email,
+          password: values.password,
+          ...(oauthQuery ? { oauth_query: oauthQuery } : {}),
+        },
+      );
+      if (oauthQuery && result.redirect && result.url) {
+        window.location.assign(result.url);
+        return;
+      }
       await query.invalidateQueries({ queryKey: ["me"] });
     } catch (e) {
       setError(e);

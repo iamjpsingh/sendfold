@@ -34,6 +34,7 @@ questionsRoutes.post("/api/projects/:projectId/questions", async (c) => {
     createdAt: Date.now(),
   };
   await c.env.platform.db.insert(s.questions).values(q);
+  await activity(c, project, access.name, "added question", q.prompt);
   return c.json(q, 201);
 });
 questionsRoutes.put("/api/questions/:questionId/answer", async (c) => {

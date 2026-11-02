@@ -26,12 +26,14 @@ import { AdminPage } from "@/pages/admin-page";
 import { ActivityPage } from "@/pages/activity-page";
 import { FileFullPage } from "@/pages/file-full-page";
 import { SettingsPage } from "@/pages/settings-page";
+import { ConnectPage } from "@/pages/connect-page";
 import "./styles.css";
 
 function Root() {
   const shared = useRouterState({
     select: (s) =>
       s.location.pathname.startsWith("/s/") ||
+      s.location.pathname === "/connect" ||
       s.location.pathname.startsWith("/preview/"),
   });
   return shared ? <Outlet /> : <Authenticated />;
@@ -60,6 +62,11 @@ const root = createRootRoute({
   ),
 });
 const routes = [
+  createRoute({
+    getParentRoute: () => root,
+    path: "/connect",
+    component: ConnectPage,
+  }),
   createRoute({
     getParentRoute: () => root,
     path: "/preview/$projectId/$fileId",

@@ -26,7 +26,7 @@ Initial local verification, 2 November 2026. This is a development release, not 
 
 ## Known validation limits
 
-Cloudflare remote resources and a live deployment have not been created. Local workerd verification does not measure production CPU limits. Docker configuration is provided. The Docker CLI is installed, but its daemon is not running, so container execution was not verified. The built production Node server was started separately and successfully served its health endpoint and frontend.
+Production Cloudflare resources and hosting were subsequently configured; see the release verification below. Local workerd verification does not measure production CPU limits. Docker configuration is provided. The Docker CLI is installed, but its daemon is not running, so container execution was not verified. The built production Node server was started separately and successfully served its health endpoint and frontend.
 
 The dependency audit reports moderate transitive advisories involving ExcelJS's Node archive/glob tooling and UUID utilities, and Drizzle Kit's legacy development loader/esbuild. The application does not expose those development servers. The browser XLSX path does not use the Node filesystem glob implementation. No forced major-version overrides were applied because they can break these libraries. Review upstream releases before a production rollout; do not treat this as a zero-advisory dependency tree.
 
@@ -42,3 +42,13 @@ The spreadsheet editor is a large lazy-loaded dependency. It is excluded from th
 - A Pages Git build completed successfully from commit `cd949fd`.
 - First super-admin setup, production login, role checks, authenticated project listing, secure session cookies, and sign-out are verified. Initial setup is closed.
 - Worker Git connection still requires completion. Authenticated production file flows have not yet been verified.
+
+## AI connector verification — 2 November 2026
+
+- Official MCP SDK client initializes the stateless server, lists tools and exercises project discovery, scoped search/fetch, text reading, HTML creation, optimistic revision saving, comments and questions.
+- Integration coverage checks unapproved projects, read-only tool sets, account disabling, membership removal/downgrade, editor versus admin privileges, locked projects, expired/revoked keys and unsafe Origin rejection.
+- OAuth tests cover both discovery endpoints, dynamic registration, signed consent tampering, login continuation, rejected PKCE verifier, scope narrowing, code replay rejection, refresh rotation, grant revocation and reconnect without reviving old tokens.
+- Local workerd/D1/R2 run passed SDK initialization, all ten write-enabled tools being listed, an HTML upload, and immediate revocation. The OAuth discovery/consent/PKCE/refresh/revoke/reconnect flow also passed through workerd HTTP.
+- Browser checked the built Settings connection panel, project selection and read-only defaults.
+- Formatting, TypeScript, source-size checks, tests, production build, Worker dry run and Pages Functions compilation are required before release. Every handwritten source/test file remains at most 300 lines.
+- Vendor setup follows current official documentation. End-to-end approval in the user's actual ChatGPT, Codex, Claude and Gemini accounts has not been performed. Custom connector availability depends on each client and plan. PDF/Office content extraction is not implemented.

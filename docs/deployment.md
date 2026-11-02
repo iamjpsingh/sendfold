@@ -60,7 +60,7 @@ The web configuration binds `API` to `sendfold-api`. If either name changes, upd
 
 Open your production URL and complete first-run setup using `SETUP_TOKEN`. Verify login, one file upload, password-only guest access in a separate browser session, revocation, and a saved revision before sharing real client work.
 
-Only the configured origin can mutate data. Preview deployment URLs require a separate backend environment and origin; do not point arbitrary preview URLs at production data. Keep frontend and API deployments on compatible versions.
+Browser mutations require the configured origin. The explicitly listed OAuth machine endpoints and bearer-protected MCP endpoint also accept requests without an Origin header. Preview deployment URLs require a separate backend environment and origin; do not point arbitrary preview URLs at production data. Keep frontend and API deployments on compatible versions.
 
 ## Limits and costs
 
@@ -80,3 +80,7 @@ npx wrangler dev --port 8789 --var APP_ORIGIN:http://127.0.0.1:8789
 ```
 
 The local D1/R2 state is separate from `.data/`, which belongs to the Node development adapter. `npm run cf:check` validates bundling but does not prove deployed production behavior.
+
+## Connector migration
+
+Apply migration `0003_military_may_parker.sql` and deploy the API before the frontend. Existing users and projects are preserved. This migration adds connection grants and Better Auth OAuth/signing-key tables. No extra secrets or bindings are required. Include the new `.well-known` Pages Function when deploying the frontend so remote clients can discover authorization. On a VPS, forward both `/api/*` and `/.well-known/*` to the Node server. The canonical `APP_ORIGIN` must be the public HTTPS origin.

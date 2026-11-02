@@ -30,6 +30,14 @@ Comments capture the current file version. Questions support written, single-cho
 
 Indexed project, comment, share, question, and activity lookups keep common operations simple. Project counters are fetched in one SQL query rather than one network round trip per project. Large project lists, comment histories, and file trees need pagination before very large-scale use; do not treat the current initial release as load-tested enterprise infrastructure.
 
-## Later MCP connectors
+## AI connector
 
-Add a separate authentication and scope layer for machine clients. Begin with read-only project/file metadata, then explicit comment/response tools. Require project-scoped revocable tokens or OAuth, audit tool use, and treat uploaded content as untrusted. Browser cookies and guest link passwords must not become machine API keys. No connector endpoint exists in this release.
+`/api/mcp` uses the official MCP SDK with stateless Web Standard HTTP and compatibility for older Streamable HTTP clients. Better Auth's MCP/OAuth Provider plugin supplies discovery, dynamic client registration, signed consent requests, PKCE, authorization codes, rotating refresh tokens and database-backed signing keys. Public signup and OAuth client administration remain closed. Public registration only accepts standard browser/native MCP clients; remote JWKS, webhook metadata and machine-only grants are rejected.
+
+A connection belongs to a user, lists explicit project IDs, expires, and defaults to read-only. Access keys contain 256 random bits; only SHA-256 hashes are stored. OAuth access tokens last 15 minutes and carry the connection's immutable ID. Each call checks the live grant, user, expiry, project selection and current membership. Revoking a connection invalidates its JWTs immediately and removes its client's refresh tokens and consent. Reapproving creates a new grant ID; old access tokens stay invalid. OAuth refresh tokens last up to 30 days and grant approvals up to 90 days. Use Settings to revoke the whole grant; a client's token-revocation call is not a substitute for grant revocation.
+
+Tools use an internal, server-only principal to call existing permission-checked routes. HTTP headers cannot supply that principal. Connector writes reuse project locks, upload validation, file leases and optimistic revision checks. Each connection has a distinct editor identity. Write authors and last-used times identify connector activity; this is not a comprehensive audit log of every read.
+
+OAuth token/registration/revocation/introspection and MCP requests may omit Origin because they are machine endpoints; a supplied foreign Origin is rejected. Ordinary browser mutations still require the installation origin. MCP never accepts a browser cookie or a client share password. No tools manage accounts, share passwords, project membership or installation settings. Text tools have a 256 KB limit, and search uses bounded metadata queries. Uploaded content remains untrusted data.
+
+Pages proxies both `/api/*` and `/.well-known/*` to the private service-bound Worker. Node serves the same routes. No AI vendor API keys, extra service, Durable Object, paid dependency, or new Cloudflare binding is required. CIMD and DPoP-bound access are not implemented in this initial connector; use DCR and bearer tokens. See [connector setup](connectors.md).

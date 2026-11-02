@@ -2,11 +2,13 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import * as schema from "@sendfold/database/schema";
 import type { Platform } from "./platform";
+import { oauthPlugins } from "./connectors/oauth";
 export function createAuth(platform: Platform) {
   return betterAuth({
     appName: "Sendfold",
     baseURL: platform.origin,
     secret: platform.secret,
+    plugins: oauthPlugins(platform),
     database: drizzleAdapter(platform.db, { provider: "sqlite", schema }),
     emailAndPassword: {
       enabled: true,

@@ -11,6 +11,7 @@ if (existsSync(envFile)) loadEnvFile(envFile);
 const platform = createNodePlatform();
 const server = new Hono();
 server.all("/api/*", (c) => app.fetch(c.req.raw, { platform }));
+server.all("/.well-known/*", (c) => app.fetch(c.req.raw, { platform }));
 server.use("*", serveStatic({ root: resolve(repoRoot, "apps/web/dist") }));
 server.get(
   "*",

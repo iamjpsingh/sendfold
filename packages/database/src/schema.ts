@@ -262,3 +262,6 @@ export const rateLimits = sqliteTable("rate_limits", {
 export type Project = typeof projects.$inferSelect;
 export type StoredFile = typeof files.$inferSelect;
 export type AppUser = typeof user.$inferSelect;
+export * from "./connectors";
+export * from "./oauth-clients";
+export * from "./oauth-tokens";
