@@ -1,20 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": [
-    "src",
-    "*.ts",
-    "tests",
-    "functions"
-  ],
+  "include": ["src", "*.ts", "tests", "functions"],
   "compilerOptions": {
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     },
-    "types": [
-      "node",
-      "vite/client"
-    ]
+    "types": ["node", "vite/client"]
   }
 }

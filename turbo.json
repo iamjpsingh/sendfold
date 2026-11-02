@@ -1,1 +1,18 @@
-{"$schema":"https://turbo.build/schema.json","globalEnv":["APP_ORIGIN","BETTER_AUTH_SECRET","SETUP_TOKEN","DATA_DIR","NODE_ENV","PORT"],"tasks":{"dev":{"cache":false,"persistent":true},"build":{"dependsOn":["^build"],"outputs":["dist/**"]},"check":{"dependsOn":["^check"]},"test":{"dependsOn":["^check"],"cache":false},"deploy":{"dependsOn":["build"],"cache":false}}}
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "APP_ORIGIN",
+    "BETTER_AUTH_SECRET",
+    "SETUP_TOKEN",
+    "DATA_DIR",
+    "NODE_ENV",
+    "PORT"
+  ],
+  "tasks": {
+    "dev": { "cache": false, "persistent": true },
+    "build": { "dependsOn": ["^build"], "outputs": ["dist/**"] },
+    "check": { "dependsOn": ["^check"] },
+    "test": { "dependsOn": ["^check"], "cache": false },
+    "deploy": { "dependsOn": ["build"], "cache": false }
+  }
+}

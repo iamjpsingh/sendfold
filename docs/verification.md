@@ -31,3 +31,13 @@ Cloudflare remote resources and a live deployment have not been created. Local w
 The dependency audit reports moderate transitive advisories involving ExcelJS's Node archive/glob tooling and UUID utilities, and Drizzle Kit's legacy development loader/esbuild. The application does not expose those development servers. The browser XLSX path does not use the Node filesystem glob implementation. No forced major-version overrides were applied because they can break these libraries. Review upstream releases before a production rollout; do not treat this as a zero-advisory dependency tree.
 
 The spreadsheet editor is a large lazy-loaded dependency. It is excluded from the initial app bundle, but opening a workbook requires downloading the editor. There is no load-test evidence for very large installations or concurrent production traffic.
+
+## Release verification — 2 November 2026
+
+- Project membership integration tests cover independent roles, inaccessible projects, editor/viewer restrictions, project-admin scope, membership removal, account disabling, and activity filtering.
+- Built frontend checked in the browser: role changes persist; viewers have no upload, share, membership, account-directory, or installation-admin controls.
+- GitHub Actions checks passed on the public repository.
+- Production D1 migrations, private R2 bucket, API Worker, encrypted runtime secrets, and Pages service binding are configured.
+- Live `/api/health` returns 200, `/api/setup` is reachable, and unauthenticated `/api/projects` returns 401.
+- A Pages Git build completed successfully from commit `cd949fd`.
+- Worker Git connection and initial super-admin setup still require completion. Authenticated production file flows have not yet been verified.

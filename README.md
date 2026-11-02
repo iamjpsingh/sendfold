@@ -1,5 +1,7 @@
 # Sendfold
 
+[Open Sendfold](https://sendfold.pages.dev) · [GitHub](https://github.com/iamjpsingh/sendfold)
+
 A private project portal for files, client questions, decisions, and feedback. MIT licensed; self-host on Cloudflare Pages + Workers or a VPS. No hosted authentication subscription is required.
 
 ## What works

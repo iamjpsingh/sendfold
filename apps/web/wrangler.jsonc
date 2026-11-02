@@ -6,7 +6,7 @@
   "services": [
     {
       "binding": "API",
-      "service": "sendfold-api"
-    }
-  ]
+      "service": "sendfold-api",
+    },
+  ],
 }
