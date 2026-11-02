@@ -40,4 +40,5 @@ The spreadsheet editor is a large lazy-loaded dependency. It is excluded from th
 - Production D1 migrations, private R2 bucket, API Worker, encrypted runtime secrets, and Pages service binding are configured.
 - Live `/api/health` returns 200, `/api/setup` is reachable, and unauthenticated `/api/projects` returns 401.
 - A Pages Git build completed successfully from commit `cd949fd`.
-- Worker Git connection and initial super-admin setup still require completion. Authenticated production file flows have not yet been verified.
+- First super-admin setup, production login, role checks, authenticated project listing, secure session cookies, and sign-out are verified. Initial setup is closed.
+- Worker Git connection still requires completion. Authenticated production file flows have not yet been verified.
