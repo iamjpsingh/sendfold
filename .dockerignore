@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+**/dist
+**/.turbo
+**/.wrangler
+**/.dev.vars
+.data
+.data-*
+.env
+.git
+work
+outputs

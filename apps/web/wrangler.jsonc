@@ -1,0 +1,13 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "sendfold",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-11-02",
+  "services": [
+    {
+      "binding": "API",
+      "service": "sendfold-api"
+    }
+  ],
+  "account_id": "e737800c0654909a9235d83157722374"
+}

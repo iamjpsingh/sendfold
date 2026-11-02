@@ -1,0 +1,31 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "sendfold-api",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-11-02",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": false,
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "APP_ORIGIN": "https://sendfold.pages.dev"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sendfold",
+      "migrations_dir": "../../packages/database/migrations",
+      "database_id": "b2252351-f889-4688-bdd2-a0c0f0f76c1f"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "sendfold-files"
+    }
+  ],
+  "account_id": "e737800c0654909a9235d83157722374"
+}

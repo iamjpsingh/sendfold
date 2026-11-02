@@ -1,0 +1,15 @@
+{
+  "name": "@sendfold/database",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./schema": "./src/schema.ts"
+  },
+  "scripts": {
+    "generate": "drizzle-kit generate",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.4"
+  }
+}

@@ -1,0 +1,14 @@
+services:
+  sendfold:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      APP_ORIGIN: ${APP_ORIGIN:?Set APP_ORIGIN in .env}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env}
+      SETUP_TOKEN: ${SETUP_TOKEN:?Set SETUP_TOKEN in .env}
+    volumes:
+      - sendfold-data:/data
+volumes:
+  sendfold-data:

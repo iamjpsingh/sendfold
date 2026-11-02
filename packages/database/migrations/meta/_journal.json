@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1793615480701,
+      "tag": "0000_brown_deathbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1793616466704,
+      "tag": "0001_loud_krista_starr",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793618145918,
+      "tag": "0002_slow_earthquake",
+      "breakpoints": true
+    }
+  ]
+}

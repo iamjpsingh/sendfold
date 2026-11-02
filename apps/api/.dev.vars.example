@@ -1,0 +1,2 @@
+BETTER_AUTH_SECRET=replace-with-a-long-random-development-secret
+SETUP_TOKEN=replace-with-a-different-random-development-token

@@ -1,0 +1,30 @@
+{
+  "name": "@sendfold/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/node.ts",
+    "build": "tsc --noEmit && esbuild src/node.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/node.js",
+    "check": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "cf:types": "wrangler types",
+    "cf:check": "wrangler deploy --dry-run",
+    "cf:dev": "wrangler dev",
+    "cf:migrate": "wrangler d1 migrations apply sendfold --remote",
+    "deploy": "wrangler deploy",
+    "start": "node dist/node.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.6",
+    "better-auth": "^1.7.15",
+    "better-sqlite3": "^13.0.3",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.16",
+    "zod": "^4.6.7",
+    "@sendfold/shared": "*",
+    "@sendfold/database": "*"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "latest"
+  }
+}

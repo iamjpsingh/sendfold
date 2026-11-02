@@ -1,0 +1,34 @@
+{
+  "name": "sendfold",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "packageManager": "npm@10.9.7",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "check": "node scripts/check-size.mjs && turbo check",
+    "test": "turbo test",
+    "db:generate": "npm run generate -w @sendfold/database",
+    "deploy:web": "npm run deploy -w @sendfold/web",
+    "deploy:api": "npm run deploy -w @sendfold/api",
+    "format": "prettier --write \"apps/*/src/**/*.{ts,tsx,css}\" \"apps/*/tests/*.ts\" \"packages/*/src/*.ts\" \"scripts/*.mjs\"",
+    "format:check": "prettier --check \"apps/*/src/**/*.{ts,tsx,css}\" \"apps/*/tests/*.ts\" \"packages/*/src/*.ts\" \"scripts/*.mjs\""
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "@types/node": "^22.0.0",
+    "drizzle-kit": "latest",
+    "esbuild": "latest",
+    "prettier": "^3.9.10",
+    "tsx": "latest",
+    "turbo": "latest",
+    "typescript": "latest",
+    "wrangler": "latest"
+  }
+}
