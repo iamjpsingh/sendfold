@@ -272,3 +272,5 @@ export * from "./oauth-clients";
 export * from "./oauth-tokens";
 
 export * from "./project-items";
+
+export * from "./audit";

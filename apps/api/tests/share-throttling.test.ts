@@ -20,7 +20,7 @@ test("five failures lock a link; successes preserve failures and cooldown expire
     assert.equal((await attempt("incorrect")).status, 401);
     const blocked = await attempt("Guest-password-123", "Different guest");
     assert.equal(blocked.status, 429);
-    assert.equal(blocked.headers.get("set-cookie"), null);
+    assert(!blocked.headers.get("set-cookie")?.includes(`sf_${share.id}=`));
     const retry = Number(blocked.headers.get("Retry-After"));
     assert(retry > 0 && retry <= 900);
     const body = (await blocked.json()) as { error: string };

@@ -100,6 +100,24 @@ export function SharedPage() {
                       placeholder="So the team knows who left feedback"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="guest-email">
+                      Email{" "}
+                      <span className="text-muted-foreground">(optional)</span>
+                    </Label>
+                    <Input
+                      id="guest-email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      maxLength={254}
+                    />
+                  </div>
+                  <p className="text-xs leading-5 text-muted-foreground">
+                    Project administrators can see visits, actions, your IP
+                    address and browser details. Guest names and emails are
+                    self-reported.
+                  </p>
                   <Button type="submit" className="w-full" disabled={busy}>
                     <Busy busy={busy}>Open shared work</Busy>
                     <ArrowRight className="size-4" />

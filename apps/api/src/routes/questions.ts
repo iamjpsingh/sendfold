@@ -95,6 +95,13 @@ questionsRoutes.put("/api/questions/:questionId/answer", async (c) => {
       target: [s.answers.questionId, s.answers.actorKey],
       set: { value: input.value, author: access.name, updatedAt: Date.now() },
     });
-  await activity(c, project, access.name, "answered", q.prompt.slice(0, 100));
+  await activity(
+    c,
+    project,
+    access.name,
+    "answered",
+    q.prompt.slice(0, 100),
+    q.id,
+  );
   return c.json({ ok: true });
 });

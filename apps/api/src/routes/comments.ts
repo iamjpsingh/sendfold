@@ -53,7 +53,8 @@ commentsRoutes.post("/api/projects/:projectId/comments", async (c) => {
     project,
     access.name,
     "commented",
-    input.body.slice(0, 120),
+    input.fileId ? "File feedback" : "Project feedback",
+    comment.id,
   );
   return c.json(comment, 201);
 });
@@ -75,5 +76,13 @@ commentsRoutes.patch("/api/comments/:commentId", async (c) => {
     .update(s.comments)
     .set(input)
     .where(eq(s.comments.id, comment.id));
+  await activity(
+    c,
+    project,
+    access.name,
+    input.resolved ? "resolved comment" : "reopened comment",
+    "Updated feedback status",
+    comment.id,
+  );
   return c.json({ ok: true });
 });

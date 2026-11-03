@@ -14,6 +14,7 @@ export interface BlobStore {
   delete(key: string): Promise<void>;
 }
 export interface Platform {
+  requestInfo?: import("@sendfold/shared/audit").RequestInfo;
   db: Database;
   blobs: BlobStore;
   origin: string;

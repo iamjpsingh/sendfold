@@ -1,3 +1,4 @@
+import { useFileVisit } from "../audit/use-file-visit";
 import { lazy, Suspense } from "react";
 import { FileQuestion } from "lucide-react";
 import type { ProjectFile } from "@sendfold/shared/types";
@@ -42,6 +43,7 @@ export function FileRenderer({
   onChange: () => void;
   full?: boolean;
 }) {
+  useFileVisit(file.id, token, full);
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   return (
     <Suspense fallback={<Loading />}>

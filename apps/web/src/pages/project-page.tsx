@@ -8,6 +8,8 @@ import {
   ClipboardCheck,
   ListTodo,
   LockKeyhole,
+  Users,
+  History,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProject } from "@/lib/queries";
@@ -30,6 +32,8 @@ import { ShareDialog } from "@/features/sharing/share-dialog";
 import { Comments } from "@/features/feedback/comments";
 import { ProjectItems } from "@/features/project-items/project-items";
 import { Questions } from "@/features/feedback/questions";
+import { Responses } from "@/features/audit/responses";
+import { ProjectActivity } from "@/features/audit/activity";
 export function ProjectPage({
   projectId,
   token,
@@ -114,9 +118,17 @@ export function ProjectPage({
           responses.
         </div>
       )}
-      <Tabs value={tab} onValueChange={setTab} className="space-y-5">
+      <Tabs
+        value={
+          !access.manage && ["responses", "activity"].includes(tab)
+            ? "files"
+            : tab
+        }
+        onValueChange={setTab}
+        className="space-y-5"
+      >
         <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:inline-flex sm:w-auto">
+          <TabsList className="grid w-full grid-cols-2 gap-1 group-data-[orientation=horizontal]/tabs:h-auto [&>button]:h-9 sm:grid-cols-3 lg:inline-flex lg:w-auto">
             <TabsTrigger value="files">
               <Files className="size-4" />
               Files{" "}
@@ -145,6 +157,21 @@ export function ProjectPage({
                 {data.items?.length ?? 0}
               </span>
             </TabsTrigger>
+            {access.manage && (
+              <>
+                <TabsTrigger value="responses" disabled={editing}>
+                  <Users className="size-4" />
+                  Responses{" "}
+                  <span className="text-xs text-muted-foreground">
+                    {data.answers.length}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="activity" disabled={editing}>
+                  <History className="size-4" />
+                  Activity
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
           {access.manage && (
             <Select value={project.status} onValueChange={status}>
@@ -163,6 +190,16 @@ export function ProjectPage({
             </Select>
           )}
         </div>
+        {access.manage && (
+          <>
+            <TabsContent value="responses">
+              <Responses detail={data} />
+            </TabsContent>
+            <TabsContent value="activity">
+              <ProjectActivity projectId={project.id} />
+            </TabsContent>
+          </>
+        )}
         <TabsContent value="files">
           <ProjectFiles data={data} token={token} refresh={refresh} />
         </TabsContent>
@@ -170,7 +207,12 @@ export function ProjectPage({
           <ProjectItems detail={data} token={token} onChange={refresh} />
         </TabsContent>
         <TabsContent value="questions">
-          <Questions detail={data} token={token} onChange={refresh} />
+          <Questions
+            detail={data}
+            token={token}
+            onChange={refresh}
+            onViewResponses={() => setTab("responses")}
+          />
         </TabsContent>
         <TabsContent value="feedback">
           <div className="mx-auto max-w-3xl rounded-xl border bg-background p-6">

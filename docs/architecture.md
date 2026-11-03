@@ -41,3 +41,7 @@ Tools use an internal, server-only principal to call existing permission-checked
 OAuth token/registration/revocation/introspection and MCP requests may omit Origin because they are machine endpoints; a supplied foreign Origin is rejected. Ordinary browser mutations still require the installation origin. MCP never accepts a browser cookie or a client share password. No tools manage accounts, share passwords, project membership or installation settings. Text tools have a 256 KB limit, and search uses bounded metadata queries. Uploaded content remains untrusted data.
 
 Pages proxies both `/api/*` and `/.well-known/*` to the private service-bound Worker. Node serves the same routes. No AI vendor API keys, extra service, Durable Object, paid dependency, or new Cloudflare binding is required. CIMD and DPoP-bound access are not implemented in this initial connector; use DCR and bearer tokens. See [connector setup](connectors.md).
+
+## Administrator history
+
+Project audit events are stored separately from the shared progress feed. A request-scoped platform adapter supplies IP/browser metadata; the authorization layer supplies the actor. Private history, visitor summaries and response review require a current super-admin or project-admin session. Connector principals are explicitly excluded. See [activity and response history](activity-history.md) for recorded events, access rules, migration, pagination and limits.

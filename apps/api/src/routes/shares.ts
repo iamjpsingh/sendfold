@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { setCookie } from "hono/cookie";
@@ -11,6 +12,7 @@ import {
   verifyPassword,
   throttle,
   releaseAttempt,
+  RateLimitError,
 } from "../security";
 import {
   type Env,
@@ -22,6 +24,7 @@ import {
   mutable,
   activity,
 } from "../context";
+import { audit, anonymousActor } from "../audit/record";
 export const sharesRoutes = new Hono<Env>();
 sharesRoutes.get("/api/projects/:projectId/shares", async (c) => {
   const { project, access } = await projectAccess(c, c.req.param("projectId"));
@@ -140,28 +143,61 @@ sharesRoutes.post("/api/shared/:token/unlock", async (c) => {
     (share.expiresAt && share.expiresAt <= Date.now())
   )
     fail(404, "This link is no longer available.");
-  const attempt = await throttle(p.db, `share:${token}`, 5);
+  const visitor = await anonymousActor(c, share);
+  let attempt;
+  try {
+    attempt = await throttle(p.db, `share:${token}`, 5);
+  } catch (error) {
+    if (error instanceof RateLimitError)
+      await audit(
+        c,
+        share.projectId,
+        "unlock blocked",
+        "Too many password attempts",
+        { actor: visitor, groupForMs: 60_000, groupBy: share.id },
+      );
+    throw error;
+  }
   if (
     !(await verifyPassword({
       password: input.password,
       hash: share.passwordHash,
     }))
-  )
+  ) {
+    await audit(
+      c,
+      share.projectId,
+      "unlock failed",
+      "Incorrect link password",
+      { actor: visitor },
+    );
     fail(401, "Incorrect password. Please try again.");
+  }
   await releaseAttempt(p.db, attempt);
   const guestToken = randomToken(),
     expiresAt = Math.min(
       Date.now() + 8 * 60 * 60_000,
       share.expiresAt ?? Infinity,
     );
+  const guestId = id();
   await p.db.insert(s.guests).values({
-    id: id(),
+    id: guestId,
     tokenHash: await digest(guestToken),
     shareId: share.id,
     name: input.name || "Guest",
     email: input.email || null,
     expiresAt,
     createdAt: Date.now(),
+  });
+  await audit(c, share.projectId, "unlocked link", share.label, {
+    actor: {
+      actorKey: `guest:${guestId}`,
+      actorKind: "guest",
+      actorName: input.name || "Guest",
+      actorEmail: input.email || null,
+      shareId: share.id,
+      shareLabel: share.label,
+    },
   });
   setCookie(c, `sf_${share.id}`, guestToken, {
     httpOnly: true,
@@ -188,7 +224,17 @@ sharesRoutes.get("/api/shared/:token/session", async (c) => {
     (share.expiresAt && share.expiresAt <= Date.now())
   )
     fail(404, "This link has expired or been revoked.");
-  await projectAccess(c, share.projectId, share.token);
+  try {
+    await projectAccess(c, share.projectId, share.token);
+  } catch (error) {
+    if (!(error instanceof HTTPException) || ![401, 403].includes(error.status))
+      throw error;
+    await audit(c, share.projectId, "opened link", share.label, {
+      actor: await anonymousActor(c, share),
+      groupForMs: 5 * 60_000,
+    });
+    throw error;
+  }
   return c.json({
     projectId: share.projectId,
     fileId: share.fileId,

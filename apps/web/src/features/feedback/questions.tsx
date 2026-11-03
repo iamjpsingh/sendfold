@@ -1,5 +1,6 @@
 import { ClipboardCheck, Download } from "lucide-react";
 import type { ProjectDetail } from "@sendfold/shared/types";
+import { csv } from "@/lib/csv";
 import { downloadBlob } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { AddQuestion } from "./add-question";
@@ -8,14 +9,14 @@ export function Questions({
   detail,
   token,
   onChange,
+  onViewResponses,
 }: {
   detail: ProjectDetail;
   token?: string;
   onChange: () => void;
+  onViewResponses?: () => void;
 }) {
   function exportResponses() {
-    const cell = (v: string) =>
-      `"${(/^[=+@\-\t\r]/.test(v) ? "'" : "") + v.replaceAll('"', '""')}"`;
     const rows = [
       ["Number", "Question", "Respondent", "Answer"],
       ...detail.questions.flatMap((q, i) =>
@@ -30,7 +31,7 @@ export function Questions({
       ),
     ];
     downloadBlob(
-      new Blob([rows.map((r) => r.map(cell).join(",")).join("\r\n")], {
+      new Blob([csv(rows)], {
         type: "text/csv;charset=utf-8",
       }),
       "responses.csv",
@@ -45,7 +46,12 @@ export function Questions({
             Clear answers keep the project moving.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {detail.access.manage && (
+            <Button size="sm" onClick={onViewResponses}>
+              View all responses ({detail.answers.length})
+            </Button>
+          )}
           {detail.access.manage && detail.answers.length > 0 && (
             <Button variant="outline" size="sm" onClick={exportResponses}>
               <Download className="size-4" />
@@ -72,17 +78,9 @@ export function Questions({
           className="rounded-lg border bg-card px-4 py-3 text-sm text-muted-foreground"
           aria-live="polite"
         >
-          {detail.questions.length} questions ·{" "}
-          {
-            detail.questions.filter((q) =>
-              detail.answers.some(
-                (a) =>
-                  a.questionId === q.id &&
-                  a.actorKey === detail.access.actorKey,
-              ),
-            ).length
-          }{" "}
-          of your responses saved
+          {detail.access.manage
+            ? `${detail.answers.length} saved responses from ${new Set(detail.answers.map((a) => a.actorKey)).size} respondents`
+            : `${detail.questions.filter((q) => detail.answers.some((a) => a.questionId === q.id && a.actorKey === detail.access.actorKey)).length} of ${detail.questions.length} questions answered by you`}
         </p>
       )}
       {detail.questions.map((q, i) => (

@@ -9,11 +9,13 @@ import type { Platform } from "./platform";
 import * as s from "@sendfold/database/schema";
 import { id, digest } from "./security";
 import type { Access } from "@sendfold/shared/types";
+import { audit } from "./audit/record";
+import type { AuditActor } from "@sendfold/shared/audit";
 import type { ConnectorPrincipal } from "./connectors/authenticate";
 
 export type Env = {
   Bindings: { platform: Platform; connector?: ConnectorPrincipal };
-  Variables: { auth: ReturnType<typeof createAuth> };
+  Variables: { auth: ReturnType<typeof createAuth>; auditActor: AuditActor };
 };
 export type C = Context<Env>;
 export function fail(
@@ -42,7 +44,20 @@ export async function currentUser(c: C) {
     .from(s.user)
     .where(eq(s.user.id, authSession.user.id))
     .get();
-  return result && !result.disabled ? result : null;
+  if (!result || result.disabled) return null;
+  c.set("auditActor", {
+    actorKey: c.env.connector
+      ? `connector:${c.env.connector.id}`
+      : `user:${result.id}`,
+    actorKind: c.env.connector ? "connector" : "member",
+    actorName: c.env.connector
+      ? `${result.name} via ${c.env.connector.label}`
+      : result.name,
+    actorEmail: result.email,
+    shareId: null,
+    shareLabel: null,
+  });
+  return result;
 }
 export async function requireUser(c: C) {
   return (await currentUser(c)) ?? fail(401, "Please sign in.");
@@ -130,6 +145,14 @@ export async function projectAccess(
     .get();
   if (!guest || guest.expiresAt <= Date.now())
     fail(401, "Your session has expired. Enter the password again.");
+  c.set("auditActor", {
+    actorKey: `guest:${guest.id}`,
+    actorKind: "guest",
+    actorName: guest.name,
+    actorEmail: guest.email,
+    shareId: share.id,
+    shareLabel: share.label,
+  });
   return {
     project,
     access: {
@@ -166,7 +189,9 @@ export async function activity(
   author: string,
   action: string,
   detail: string,
+  resourceId?: string,
 ) {
+  await audit(c, p.id, action, detail, { resourceId });
   await c.env.platform.db.insert(s.activities).values({
     id: id(),
     workspaceId: p.workspaceId,

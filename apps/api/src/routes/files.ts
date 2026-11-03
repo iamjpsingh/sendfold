@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { and, eq, desc } from "drizzle-orm";
 
 import * as s from "@sendfold/database/schema";
+import { audit } from "../audit/record";
 import { id, cleanPath } from "../security";
 import {
   type Env,
@@ -79,11 +80,11 @@ filesRoutes.post("/api/projects/:projectId/files", async (c) => {
     .update(s.projects)
     .set({ updatedAt: Date.now() })
     .where(eq(s.projects.id, project.id));
-  await activity(c, project, access.name, "uploaded", file.name);
+  await activity(c, project, access.name, "uploaded", file.name, file.id);
   return c.json(file, 201);
 });
 filesRoutes.get("/api/files/:fileId/content", async (c) => {
-  const { file, access } = await fileAccess(c);
+  const { file, project, access } = await fileAccess(c);
   if (c.req.query("download") && !access.allowDownload)
     fail(403, "Downloads are disabled.");
   const version = await c.env.platform.db
@@ -99,6 +100,16 @@ filesRoutes.get("/api/files/:fileId/content", async (c) => {
   if (!version) fail(404, "Version not found.");
   const object = await c.env.platform.blobs.get(version.objectKey);
   if (!object) fail(404, "File is unavailable.");
+  await audit(
+    c,
+    project.id,
+    c.req.query("download") ? "download requested" : "loaded file",
+    file.path,
+    {
+      resourceId: file.id,
+      groupForMs: c.req.query("download") ? undefined : 5 * 60_000,
+    },
+  );
   return new Response(object.body as BodyInit, {
     headers: {
       "Content-Type": "application/octet-stream",
@@ -111,7 +122,7 @@ filesRoutes.get("/api/files/:fileId/content", async (c) => {
   });
 });
 filesRoutes.get("/api/files/:fileId/workbook", async (c) => {
-  const { file } = await fileAccess(c);
+  const { file, project } = await fileAccess(c);
   const version = await c.env.platform.db
     .select()
     .from(s.versions)
@@ -121,6 +132,11 @@ filesRoutes.get("/api/files/:fileId/workbook", async (c) => {
     .get();
   if (!version?.workbookKey) return c.json(null);
   const object = await c.env.platform.blobs.get(version.workbookKey);
+  if (object)
+    await audit(c, project.id, "loaded file", file.path, {
+      resourceId: file.id,
+      groupForMs: 5 * 60_000,
+    });
   return object
     ? new Response(object.body as BodyInit, {
         headers: {

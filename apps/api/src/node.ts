@@ -1,6 +1,8 @@
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
+import { getConnInfo } from "@hono/node-server/conninfo";
+import { requestInfo } from "./audit/request-info";
 import { loadEnvFile } from "node:process";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
@@ -9,9 +11,20 @@ import { createNodePlatform, repoRoot } from "./node-platform";
 const envFile = resolve(repoRoot, ".env");
 if (existsSync(envFile)) loadEnvFile(envFile);
 const platform = createNodePlatform();
-const server = new Hono();
-server.all("/api/*", (c) => app.fetch(c.req.raw, { platform }));
-server.all("/.well-known/*", (c) => app.fetch(c.req.raw, { platform }));
+const server = new Hono<{ Variables: { requestPlatform: typeof platform } }>();
+server.use("*", async (c, next) => {
+  c.set("requestPlatform", {
+    ...platform,
+    requestInfo: requestInfo(c.req.raw, getConnInfo(c).remote.address),
+  });
+  await next();
+});
+server.all("/api/*", (c) =>
+  app.fetch(c.req.raw, { platform: c.get("requestPlatform") }),
+);
+server.all("/.well-known/*", (c) =>
+  app.fetch(c.req.raw, { platform: c.get("requestPlatform") }),
+);
 server.use("*", serveStatic({ root: resolve(repoRoot, "apps/web/dist") }));
 server.get(
   "*",

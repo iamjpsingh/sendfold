@@ -148,6 +148,7 @@ editingRoutes.post("/api/files/:fileId/revisions", async (c) => {
     access.name,
     "saved",
     `${file.name} · version ${expected + 1}`,
+    file.id,
   );
   return c.json({ version: expected + 1 });
 });

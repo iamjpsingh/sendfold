@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { PageTitle, Loading, ErrorBox } from "@/components/common";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ProjectHistory } from "@/features/audit/project-history";
 export function ActivityPage() {
   const activity = useQuery({
     queryKey: ["activity"],
@@ -17,6 +18,8 @@ export function ActivityPage() {
         title="Activity"
         description="A shared record of progress across your projects."
       />
+      <ProjectHistory />
+      <h2 className="font-semibold">Recent team progress</h2>
       {activity.isPending ? (
         <Loading />
       ) : activity.error ? (

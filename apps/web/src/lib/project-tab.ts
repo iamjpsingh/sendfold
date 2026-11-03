@@ -3,9 +3,14 @@ export function projectSearch(search: Record<string, unknown>): {
   tab?: string;
 } {
   return {
-    tab: ["files", "questions", "feedback", "items"].includes(
-      String(search.tab),
-    )
+    tab: [
+      "files",
+      "questions",
+      "feedback",
+      "items",
+      "responses",
+      "activity",
+    ].includes(String(search.tab))
       ? String(search.tab)
       : "files",
   };

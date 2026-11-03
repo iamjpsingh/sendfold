@@ -61,6 +61,29 @@ export function QuestionCard({
       setBusy(false);
     }
   }
+  const editor = (
+    <>
+      <ResponseInput
+        question={question}
+        value={value}
+        onChange={change}
+        disabled={!canAnswer || busy}
+      />
+      {canAnswer && (
+        <Button
+          size="sm"
+          disabled={
+            busy ||
+            (!dirty && !!own) ||
+            (!value.length && question.type !== "multiple")
+          }
+          onClick={save}
+        >
+          <Busy busy={busy}>{own ? "Update response" : "Save response"}</Busy>
+        </Button>
+      )}
+    </>
+  );
   return (
     <Card className="shadow-none">
       <CardHeader>
@@ -80,36 +103,43 @@ export function QuestionCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <ResponseInput
-          question={question}
-          value={value}
-          onChange={change}
-          disabled={!canAnswer || busy}
-        />
-        {canAnswer && (
-          <Button
-            size="sm"
-            disabled={
-              busy ||
-              (!dirty && !!own) ||
-              (!value.length && question.type !== "multiple")
-            }
-            onClick={save}
-          >
-            <Busy busy={busy}>{own ? "Update response" : "Save response"}</Busy>
-          </Button>
-        )}
-        {manage && answers.length > 0 && (
-          <div className="space-y-2 border-t pt-3">
-            {answers.map((a) => (
-              <p key={a.id} className="text-sm">
-                <span className="font-medium">{a.author}: </span>
-                <span className="text-muted-foreground">
-                  {Array.isArray(a.value) ? a.value.join(", ") : a.value}
-                </span>
+        {manage && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium">
+              Received responses ({answers.length})
+            </h3>
+            {answers.length ? (
+              answers.map((a) => (
+                <div key={a.id} className="rounded-md bg-muted/40 p-3 text-sm">
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <span className="font-medium">{a.author}</span>
+                    <time className="text-xs text-muted-foreground">
+                      {new Date(a.updatedAt).toLocaleString()}
+                    </time>
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap break-words">
+                    {Array.isArray(a.value)
+                      ? a.value.join(", ") || "No choices selected"
+                      : a.value || "Empty answer"}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No one has saved a response yet.
               </p>
-            ))}
+            )}
           </div>
+        )}
+        {manage ? (
+          <details className="border-t pt-3">
+            <summary className="cursor-pointer text-sm text-muted-foreground">
+              Your own response (optional)
+            </summary>
+            <div className="mt-4 space-y-4">{editor}</div>
+          </details>
+        ) : (
+          editor
         )}
       </CardContent>
     </Card>

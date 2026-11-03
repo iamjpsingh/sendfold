@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "@sendfold/database/schema";
 import { app } from "./app";
+import { cloudflareRequestInfo } from "./audit/request-info";
 import type { Platform } from "./platform";
 export default {
   async fetch(request: Request, env: Cloudflare.Env): Promise<Response> {
@@ -10,6 +11,7 @@ export default {
         { status: 503 },
       );
     const platform: Platform = {
+      requestInfo: cloudflareRequestInfo(request),
       db: drizzle(env.DB, { schema }),
       origin: env.APP_ORIGIN,
       secret: env.BETTER_AUTH_SECRET,

@@ -73,3 +73,13 @@ The spreadsheet editor is a large lazy-loaded dependency. It is excluded from th
 - New generated passwords contain 12 characters with mixed case, numbers and symbols using Web Crypto randomness; confusing characters are omitted. Existing account/link passwords and minimum lengths remain unchanged.
 - Tests cover generated-password format and uniqueness, five-failure lockout, Retry-After responses, successful unlocks preserving previous failures, independent links, existing guest sessions, expiry, concurrent reservations, and stale refunds across windows.
 - Formatting, TypeScript, integration tests, production builds and Cloudflare bundle checks are required before deployment. The source-size check covers 129 handwritten files, each at most 300 lines.
+
+## Administrator responses and visitor history — 3 November 2026
+
+- Added dedicated Responses and Activity project tabs, with administrator project selection from the main Activity page. Existing saved answers are displayed before the administrator's own optional response form.
+- Formatting, TypeScript, source-size checks, 15 API tests and 4 web tests, production builds, Worker dry run and Pages Functions compilation passed. All 147 handwritten source/test files are at most 300 lines.
+- New coverage checks admin/editor/viewer/guest/connector isolation, cross-project and single-file boundaries, anonymous visits, password failures/throttling, stable pagination, actor metadata after share revocation, legacy migration, trusted IP/country extraction and CSV formula injection.
+- Browser verification on synthetic local data covered four answers from two guests, response search, a downloaded CSV, action filtering, visitor summaries and visitor-specific history, the central history selector, and a 390-pixel layout. Fixed the mobile tab-list height so it does not overlap project status.
+- Backed up production D1, applied migration `0005_gray_black_queen.sql`, and deployed API version `8ff9b897-3edc-4416-ae99-23f29861b188`.
+- Production checks passed for two synthetic guest respondents, Cloudflare IP/country capture, ignored spoofed forwarding metadata, full-view/download/comment events, admin-only endpoints, visitor search, retained identity after share revocation, and legacy activity. The existing project still has four saved responses.
+- Earlier events do not gain invented IPs or identities. Guest identity is self-reported; loads are coalesced to limit polling noise. Responses show current answers; the history records answer-save events, not previous answer values. See [the feature's scope and storage behavior](activity-history.md).

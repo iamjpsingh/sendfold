@@ -3,6 +3,7 @@ import { and, eq, desc, sql, inArray, getTableColumns } from "drizzle-orm";
 import { z } from "zod";
 
 import * as s from "@sendfold/database/schema";
+import { audit } from "../audit/record";
 import { id } from "../security";
 import {
   type Env,
@@ -85,6 +86,9 @@ projectsRoutes.post("/api/projects", async (c) => {
 projectsRoutes.get("/api/projects/:projectId", async (c) => {
   const { project, access } = await projectAccess(c, c.req.param("projectId")),
     db = c.env.platform.db;
+  await audit(c, project.id, "viewed project", project.name, {
+    groupForMs: 5 * 60_000,
+  });
   if (access.fileId) {
     const file = await db
       .select()

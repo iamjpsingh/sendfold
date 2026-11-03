@@ -19,6 +19,9 @@ import { projectItemsRoutes } from "./routes/project-items";
 import { brandingRoutes } from "./routes/branding";
 import { connectionRoutes } from "./connectors/connections";
 import { serveMcp } from "./connectors/server";
+import { auditProjectRoutes } from "./audit/projects";
+import { auditRoutes } from "./audit/routes";
+import { responseRoutes } from "./audit/responses";
 export const app = new Hono<Env>();
 app.use(
   "/api/*",
@@ -65,6 +68,9 @@ app.onError((error, c) => {
 });
 
 app.route("/", accountRoutes);
+app.route("/", auditRoutes);
+app.route("/", auditProjectRoutes);
+app.route("/", responseRoutes);
 app.route("/", brandingRoutes);
 app.route("/", projectItemsRoutes);
 app.route("/", connectionRoutes);
