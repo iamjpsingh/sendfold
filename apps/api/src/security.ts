@@ -1,6 +1,6 @@
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { HTTPException } from "hono/http-exception";
-import { sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { Database } from "./platform";
 import { rateLimits } from "@sendfold/database/schema";
 export const id = () => crypto.randomUUID();
@@ -39,6 +39,15 @@ export function cleanPath(value: string) {
     throw new HTTPException(400, { message: "Invalid file path." });
   return path;
 }
+export class RateLimitError extends HTTPException {
+  constructor(public retryAfter: number) {
+    const minutes = Math.ceil(retryAfter / 60);
+    super(429, {
+      message: `Too many attempts. Try again in ${minutes} ${minutes === 1 ? "minute" : "minutes"}.`,
+    });
+  }
+}
+
 export async function throttle(
   db: Database,
   key: string,
@@ -51,14 +60,36 @@ export async function throttle(
     .values({ key, count: 1, resetAt: now + windowMs })
     .onConflictDoUpdate({
       target: rateLimits.key,
+      setWhere: sql`${rateLimits.resetAt} <= ${now} OR ${rateLimits.count} < ${max}`,
       set: {
-        count: sql`CASE WHEN ${rateLimits.resetAt} < ${now} THEN 1 ELSE ${rateLimits.count}+1 END`,
-        resetAt: sql`CASE WHEN ${rateLimits.resetAt} < ${now} THEN ${now + windowMs} ELSE ${rateLimits.resetAt} END`,
+        count: sql`CASE WHEN ${rateLimits.resetAt} <= ${now} THEN 1 ELSE ${rateLimits.count}+1 END`,
+        resetAt: sql`CASE WHEN ${rateLimits.resetAt} <= ${now} THEN ${now + windowMs} ELSE ${rateLimits.resetAt} END`,
       },
     })
     .returning();
-  if (row.count > max)
-    throw new HTTPException(429, {
-      message: "Too many attempts. Please try again later.",
-    });
+  if (row) return { key: row.key, resetAt: row.resetAt };
+  const blocked = await db
+    .select({ resetAt: rateLimits.resetAt })
+    .from(rateLimits)
+    .where(eq(rateLimits.key, key))
+    .get();
+  throw new RateLimitError(
+    Math.max(1, Math.ceil(((blocked?.resetAt ?? now + windowMs) - now) / 1000)),
+  );
+}
+
+// Refund only this successful verification, never another request's failures.
+export async function releaseAttempt(
+  db: Database,
+  attempt: { key: string; resetAt: number },
+) {
+  await db
+    .update(rateLimits)
+    .set({ count: sql`MAX(0, ${rateLimits.count} - 1)` })
+    .where(
+      and(
+        eq(rateLimits.key, attempt.key),
+        eq(rateLimits.resetAt, attempt.resetAt),
+      ),
+    );
 }

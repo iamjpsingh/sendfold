@@ -172,6 +172,11 @@ export function ShareDialog({
               <div className="flex gap-2">
                 <Input
                   id="share-password"
+                  aria-describedby="share-password-help"
+                  className="font-mono"
+                  spellCheck={false}
+                  autoCapitalize="none"
+                  autoCorrect="off"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   minLength={12}
@@ -189,6 +194,14 @@ export function ShareDialog({
                 </Button>
               </div>
             </div>
+            <p
+              id="share-password-help"
+              className="text-xs text-muted-foreground"
+            >
+              Generated passwords use 12 random characters: uppercase and
+              lowercase letters, numbers and symbols. Keep this password or use
+              a longer, unique one.
+            </p>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="share-permission">Permission</Label>

@@ -12,7 +12,7 @@ Guest links have independent random tokens, scrypt password hashes, permissions,
 
 Public account signup is blocked. First-run setup needs the server's setup token and can only create the initial administrator. Admin-created team accounts use Better Auth. Disabled users lose server access and existing sessions. Unsafe browser requests must match the configured origin.
 
-Login and share unlock attempts use persistent database throttles. These are a basic application control, not a distributed abuse defense. Add platform-level controls when operating an exposed instance at scale. Expired throttle/session rows currently require periodic maintenance; no background scheduler is installed.
+Login and share unlock attempts use persistent database throttles. Share links allow five failed verifications per 15-minute window; an atomic database reservation limits concurrent verification attempts before password hashing. Successful verification refunds only its own reservation in that same window. Blocked requests return HTTP 429 and Retry-After, and do not extend the window. These are a basic application control, not a distributed abuse defense. Add platform-level controls when operating an exposed instance at scale. Expired throttle/session rows currently require periodic maintenance; no background scheduler is installed.
 
 ## Files and previews
 

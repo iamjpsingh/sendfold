@@ -67,3 +67,9 @@ The spreadsheet editor is a large lazy-loaded dependency. It is excluded from th
 - Production D1/R2 integration passed: uploading HTML/text, password-only single-file and whole-project access, denial of sibling-file access, task completion, approval answers, and immediate share revocation. Synthetic test data is removed after verification.
 - Replaced the unsupported domain rule in `_redirects` with configurable Pages middleware. Regression coverage verifies path/query preservation, permanent method-preserving redirects, and no redirects for custom, preview, localhost, or self-targeting origins.
 - API deployment works through Wrangler. Worker Git auto-deploy is still unconnected: the available login lacks Workers Builds access (403), and the existing dashboard browser session could not be controlled. Pages Git auto-deploy is working. The deployment guide contains the exact backend build settings for completing this account-level step.
+
+## Short access passwords and throttling — 3 November 2026
+
+- New generated passwords contain 12 characters with mixed case, numbers and symbols using Web Crypto randomness; confusing characters are omitted. Existing account/link passwords and minimum lengths remain unchanged.
+- Tests cover generated-password format and uniqueness, five-failure lockout, Retry-After responses, successful unlocks preserving previous failures, independent links, existing guest sessions, expiry, concurrent reservations, and stale refunds across windows.
+- Formatting, TypeScript, integration tests, production builds and Cloudflare bundle checks are required before deployment. The source-size check covers 129 handwritten files, each at most 300 lines.

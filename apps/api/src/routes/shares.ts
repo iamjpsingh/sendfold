@@ -10,6 +10,7 @@ import {
   hashPassword,
   verifyPassword,
   throttle,
+  releaseAttempt,
 } from "../security";
 import {
   type Env,
@@ -139,7 +140,7 @@ sharesRoutes.post("/api/shared/:token/unlock", async (c) => {
     (share.expiresAt && share.expiresAt <= Date.now())
   )
     fail(404, "This link is no longer available.");
-  await throttle(p.db, `share:${token}`, 12);
+  const attempt = await throttle(p.db, `share:${token}`, 5);
   if (
     !(await verifyPassword({
       password: input.password,
@@ -147,7 +148,7 @@ sharesRoutes.post("/api/shared/:token/unlock", async (c) => {
     }))
   )
     fail(401, "Incorrect password. Please try again.");
-  await p.db.delete(s.rateLimits).where(eq(s.rateLimits.key, `share:${token}`));
+  await releaseAttempt(p.db, attempt);
   const guestToken = randomToken(),
     expiresAt = Math.min(
       Date.now() + 8 * 60 * 60_000,

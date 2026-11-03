@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import { bodyLimit } from "hono/body-limit";
 import { z } from "zod";
 import { createAuth } from "./auth";
+import { RateLimitError } from "./security";
 import { type Env, fail } from "./context";
 import { accountRoutes } from "./routes/account";
 import { memberRoutes } from "./routes/members";
@@ -51,6 +52,8 @@ app.all("/api/mcp", (c) =>
   serveMcp(c, (request, env) => app.fetch(request, env)),
 );
 app.onError((error, c) => {
+  if (error instanceof RateLimitError)
+    c.header("Retry-After", String(error.retryAfter));
   if (error instanceof SyntaxError)
     return c.json({ error: "Invalid JSON body." }, 400);
   if (error instanceof z.ZodError)

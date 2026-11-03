@@ -4,6 +4,10 @@
 
 Use **Share project** to include all project files, questions, feedback, links and tasks. Use **Share file** beside a preview, or pick a file in the sharing dialog, to restrict a link to that file and its feedback. Each link has a separate password, permission, expiry and download setting. Revoke it to close existing guest sessions.
 
+Generated passwords use 12 cryptographically random characters with uppercase/lowercase letters, numbers and symbols; ambiguous characters such as `0`, `O`, `1`, `I` and `l` are excluded. Custom passwords still require at least 12 characters; prefer the generated value or a longer unique password. Existing passwords are unchanged.
+
+After five failed unlock attempts in a 15-minute window, the link temporarily blocks new unlock attempts until that window ends. The server returns a retry time. Counters are shared across browsers and IP addresses, and a successful unlock does not erase earlier failures. Existing authorized sessions continue working. This protects online password guessing; it does not make passwords or shared content impossible to compromise.
+
 Single-file links can start in compact preview or full view. Recipients can switch views and use **Open full view** to open a protected preview in a new tab. Single-file access is enforced on the API for content, versions, spreadsheets, edits and comments. It does not allow uploading extra files or accessing project questions/resources. Signed-in team members retain their own project permissions.
 
 Share the entire project for an HTML site that depends on separate stylesheets, images or scripts in the uploaded folder. A single-file link includes only its chosen file; self-contained HTML works in either mode. Unknown file formats can be stored and downloaded, but may not have a browser preview. Uploaded HTML runs in an isolated sandbox.

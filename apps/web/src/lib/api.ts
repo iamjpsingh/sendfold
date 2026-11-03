@@ -63,12 +63,7 @@ export function date(n: number | string) {
     day: "numeric",
   });
 }
-export function randomPassword() {
-  const bytes = crypto.getRandomValues(new Uint8Array(18));
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
-    "",
-  );
-}
+export { randomPassword } from "./password";
 export function downloadBlob(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

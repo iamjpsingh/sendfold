@@ -106,7 +106,8 @@ export function SharedPage() {
                   </Button>
                   <p className="text-xs leading-5 text-muted-foreground">
                     Your access lasts up to 8 hours. Feedback is attributed to
-                    the name you provide.
+                    the name you provide. Repeated incorrect passwords
+                    temporarily lock this link.
                   </p>
                 </form>
               )}
