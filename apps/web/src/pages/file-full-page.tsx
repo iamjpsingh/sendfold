@@ -21,7 +21,7 @@ export function FileFullPage() {
   if (project.isPending) return <Loading />;
   return (
     <div className="min-h-screen bg-background">
-      <header className="flex min-h-[57px] items-center justify-between gap-3 border-b px-4">
+      <header className="sticky top-0 z-30 bg-background flex min-h-[57px] items-center justify-between gap-3 border-b px-4">
         <div className="flex min-w-0 items-center gap-3">
           <Brand small />
           <span className="truncate text-sm font-medium">
@@ -49,7 +49,9 @@ export function FileFullPage() {
             </Button>
           )}
           <Button size="sm" variant="outline" asChild>
-            <a href={back}>Back to project</a>
+            <a href={back}>
+              {token ? "Back to shared link" : "Back to project"}
+            </a>
           </Button>
         </div>
       </header>

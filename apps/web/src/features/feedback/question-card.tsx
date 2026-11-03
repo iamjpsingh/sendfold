@@ -1,16 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { Question, Answer } from "@sendfold/shared/types";
 import { api, shareQuery } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { ResponseInput, responseTypes } from "./response-input";
 import { Badge } from "@/components/ui/badge";
 import { Busy } from "@/components/common";
 export function QuestionCard({
   question,
+  number,
   answers,
   actorKey,
   canAnswer,
@@ -19,6 +18,7 @@ export function QuestionCard({
   onChange,
 }: {
   question: Question;
+  number: number;
   answers: Answer[];
   actorKey: string;
   canAnswer: boolean;
@@ -30,7 +30,20 @@ export function QuestionCard({
   const [value, setValue] = useState<string | string[]>(
       own?.value ?? (question.type === "multiple" ? [] : ""),
     ),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [dirty, setDirty] = useState(false);
+  const savedValue = JSON.stringify(
+    own?.value ?? (question.type === "multiple" ? [] : ""),
+  );
+  const hasDraft = useRef(false);
+  useEffect(() => {
+    if (!hasDraft.current) setValue(JSON.parse(savedValue));
+  }, [savedValue]);
+  function change(value: string | string[]) {
+    setValue(value);
+    setDirty(true);
+    hasDraft.current = true;
+  }
   async function save() {
     setBusy(true);
     try {
@@ -39,6 +52,8 @@ export function QuestionCard({
         body: JSON.stringify({ value }),
       });
       toast.success("Response saved");
+      setDirty(false);
+      hasDraft.current = false;
       onChange();
     } catch (e) {
       toast.error((e as Error).message);
@@ -46,22 +61,12 @@ export function QuestionCard({
       setBusy(false);
     }
   }
-  const options =
-    question.type === "approval"
-      ? ["Approved", "Changes requested", "Rejected"]
-      : question.options;
   return (
     <Card className="shadow-none">
       <CardHeader>
         <div className="flex justify-between gap-3">
           <Badge variant="secondary" className="text-xs font-normal">
-            {question.type === "approval"
-              ? "Decision"
-              : question.type === "text"
-                ? "Written response"
-                : question.type === "multiple"
-                  ? "Choose any"
-                  : "Choose one"}
+            {responseTypes[question.type]}
           </Badge>
           {own && (
             <span className="text-xs text-muted-foreground">
@@ -70,70 +75,25 @@ export function QuestionCard({
           )}
         </div>
         <CardTitle className="pt-2 text-base leading-6">
+          <span className="mr-2 tabular-nums text-link">{number}.</span>
           {question.prompt}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {question.type === "text" ? (
-          <Textarea
-            aria-label={question.prompt}
-            value={String(value)}
-            onChange={(e) => setValue(e.target.value)}
-            disabled={!canAnswer}
-            placeholder="Your answer…"
-          />
-        ) : (
-          <div className="space-y-2">
-            {question.type === "multiple" && canAnswer && (
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setValue([...options])}
-                >
-                  Select all
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => setValue([])}>
-                  Clear selection
-                </Button>
-              </div>
-            )}
-            {options.map((option) => (
-              <Label
-                key={option}
-                className="flex cursor-pointer items-center gap-3 rounded-md border p-3 font-normal"
-              >
-                <Checkbox
-                  disabled={!canAnswer}
-                  checked={
-                    Array.isArray(value)
-                      ? value.includes(option)
-                      : value === option
-                  }
-                  onCheckedChange={(checked) =>
-                    setValue(
-                      question.type === "multiple"
-                        ? checked
-                          ? [...(Array.isArray(value) ? value : []), option]
-                          : (Array.isArray(value) ? value : []).filter(
-                              (v) => v !== option,
-                            )
-                        : checked
-                          ? option
-                          : "",
-                    )
-                  }
-                />
-                {option}
-              </Label>
-            ))}
-          </div>
-        )}
+        <ResponseInput
+          question={question}
+          value={value}
+          onChange={change}
+          disabled={!canAnswer || busy}
+        />
         {canAnswer && (
           <Button
             size="sm"
-            variant="outline"
-            disabled={busy || (!value.length && question.type !== "multiple")}
+            disabled={
+              busy ||
+              (!dirty && !!own) ||
+              (!value.length && question.type !== "multiple")
+            }
             onClick={save}
           >
             <Busy busy={busy}>{own ? "Update response" : "Save response"}</Busy>

@@ -9,8 +9,6 @@ import {
   ShieldCheck,
   LogOut,
   PanelLeft,
-  ArrowUpRight,
-  LockKeyhole,
 } from "lucide-react";
 import { useMe } from "@/lib/queries";
 import { post } from "@/lib/api";
@@ -24,13 +22,14 @@ import {
   SheetContent,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
+import { BrandFooter, useBranding } from "@/features/branding/brand";
 import { cn } from "@/lib/utils";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { data } = useMe(),
     query = useQueryClient(),
     path = useRouterState({ select: (s) => s.location.pathname });
   const user = data!.user;
+  const { branding } = useBranding();
   const { editing } = useEditorState();
   const links = [
     { to: "/", label: "Projects", icon: FolderOpen },
@@ -51,12 +50,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="mx-3 rounded-lg border bg-background px-3 py-3">
         <div className="flex items-center gap-2.5">
           <div className="flex size-8 items-center justify-center rounded-md bg-muted text-xs font-semibold">
-            {data?.installation?.name.slice(0, 2).toUpperCase() ?? "SF"}
+            {branding.name.slice(0, 2).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium">
-              {data?.installation?.name ?? "Sendfold"}
-            </p>
+            <p className="truncate text-sm font-medium">{branding.name}</p>
             <p className="text-xs text-muted-foreground">
               {user.role === "super_admin" ? "Super admin" : "Project member"}
             </p>
@@ -64,7 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <div className="mt-7 px-5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        Sendfold
+        Workspace
       </div>
       <nav className="mt-2 space-y-1 px-3">
         {links.map(({ to, label, icon: Icon }) => (
@@ -75,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             className={cn(
               "w-full justify-start gap-3 text-muted-foreground",
               (path === to || (to === "/" && path.startsWith("/projects"))) &&
-                "bg-primary/20 font-medium text-foreground",
+                "bg-primary/10 font-medium text-link",
             )}
           >
             <Link to={to}>
@@ -85,15 +82,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Button>
         ))}
       </nav>
-      <div className="mt-auto p-4">
-        <div className="rounded-lg border border-dashed p-3">
-          <LockKeyhole className="mb-2 size-4 text-muted-foreground" />
-          <p className="text-xs font-medium">A private place for progress.</p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            Choose exactly who can view, comment, and edit.
-          </p>
-        </div>
-      </div>
+      <div className="mt-auto" />
       <Separator />
       <div className="flex items-center gap-3 p-4">
         <Avatar className="size-8">
@@ -127,11 +116,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
   return (
     <div className="flex min-h-screen">
+      <a
+        href="#main-content"
+        className="sr-only fixed left-4 top-4 z-50 rounded-md bg-primary p-3 text-primary-foreground focus:not-sr-only"
+      >
+        Skip to content
+      </a>
       <aside className="fixed inset-y-0 hidden w-60 flex-col border-r bg-accent/25 md:flex">
         {nav}
       </aside>
       <div className="min-w-0 flex-1 md:ml-60">
-        <header className="no-print flex h-16 items-center justify-between border-b px-5 md:px-8">
+        <header className="no-print sticky top-0 z-30 flex h-16 bg-background items-center justify-between border-b px-5 md:px-8">
           <div className="flex items-center gap-3">
             <Sheet>
               <SheetTrigger asChild>
@@ -149,7 +144,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {nav}
               </SheetContent>
             </Sheet>
-            <span className="text-sm text-muted-foreground">Sendfold</span>
+            <span className="max-w-40 truncate text-sm text-muted-foreground">
+              {branding.name}
+            </span>
             <span className="text-muted-foreground/40">/</span>
             <span className="text-sm font-medium">
               {path.startsWith("/projects")
@@ -157,18 +154,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 : (links.find((l) => l.to === path)?.label ?? "Projects")}
             </span>
           </div>
-          <Badge variant="outline" className="gap-1.5 font-normal">
-            <span className="size-1.5 rounded-full bg-emerald-500" />
-            Private installation
-          </Badge>
         </header>
-        {children}
-        <footer className="no-print flex justify-between gap-4 px-8 py-6 text-xs text-muted-foreground">
-          <span>Sendfold · Share work. Reach agreement.</span>
-          <span>
-            Open source <ArrowUpRight className="inline size-3" />
-          </span>
-        </footer>
+        <div
+          id="main-content"
+          tabIndex={-1}
+          className="scroll-mt-20 outline-none"
+        >
+          {children}
+        </div>
+        <BrandFooter />
       </div>
     </div>
   );

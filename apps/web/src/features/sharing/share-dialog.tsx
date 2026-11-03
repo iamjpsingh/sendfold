@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Link2, RefreshCw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import type { Share } from "@sendfold/shared/types";
-import { api, post, randomPassword, date } from "@/lib/api";
+import type { Share, ProjectFile } from "@sendfold/shared/types";
+import { api, post, randomPassword } from "@/lib/api";
 import { Busy, ErrorBox } from "@/components/common";
 import {
   Dialog,
@@ -25,13 +25,19 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { ShareScope } from "./share-scope";
+import { ShareLinks } from "./share-links";
 
 export function ShareDialog({
   projectId,
   locked,
+  files = [],
+  initialFileId,
 }: {
   projectId: string;
   locked: boolean;
+  files?: ProjectFile[];
+  initialFileId?: string;
 }) {
   const [open, setOpen] = useState(false),
     [password, setPassword] = useState(randomPassword),
@@ -42,6 +48,8 @@ export function ShareDialog({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<unknown>(),
     [created, setCreated] = useState<{ link: string; password: string }>();
+  const [fileId, setFileId] = useState(initialFileId ?? "project"),
+    [viewMode, setViewMode] = useState<"compact" | "full">("compact");
   const query = useQueryClient();
   const shares = useQuery({
     queryKey: ["shares", projectId],
@@ -58,8 +66,10 @@ export function ShareDialog({
         label: form.get("label"),
         password,
         permission,
+        fileId: fileId === "project" ? null : fileId,
+        viewMode,
         allowDownload: download,
-        allowUpload: upload,
+        allowUpload: fileId === "project" && upload,
         expiresAt: days === "0" ? null : Date.now() + Number(days) * 86400000,
       });
       setCreated({ link: `${location.origin}/s/${share.token}`, password });
@@ -92,14 +102,17 @@ export function ShareDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button
+          variant={initialFileId ? "outline" : "default"}
+          size={initialFileId ? "sm" : "default"}
+        >
           <Link2 className="size-4" />
-          Share project
+          {initialFileId ? "Share file" : "Share project"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>One link. The right access.</DialogTitle>
+          <DialogTitle>Create a protected link</DialogTitle>
           <DialogDescription>
             Every link has its own password and permissions.
           </DialogDescription>
@@ -115,9 +128,9 @@ export function ShareDialog({
               { label: "Password — save it now", value: created.password },
             ].map((item) => (
               <div className="space-y-1" key={item.label}>
-                <Label>{item.label}</Label>
+                <Label htmlFor={item.label}>{item.label}</Label>
                 <div className="flex gap-2">
-                  <Input readOnly value={item.value} />
+                  <Input id={item.label} readOnly value={item.value} />
                   <Button
                     variant="outline"
                     size="icon"
@@ -137,6 +150,13 @@ export function ShareDialog({
         {!locked && (
           <form onSubmit={create} className="space-y-4">
             {!!error && <ErrorBox error={error} />}
+            <ShareScope
+              files={files}
+              fileId={fileId}
+              setFileId={setFileId}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+            />
             <div className="space-y-2">
               <Label htmlFor="link-label">Link label</Label>
               <Input
@@ -171,9 +191,9 @@ export function ShareDialog({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Permission</Label>
+                <Label htmlFor="share-permission">Permission</Label>
                 <Select value={permission} onValueChange={setPermission}>
-                  <SelectTrigger>
+                  <SelectTrigger id="share-permission">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -184,9 +204,9 @@ export function ShareDialog({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Expires after</Label>
+                <Label htmlFor="share-expiry">Expires after</Label>
                 <Select value={days} onValueChange={setDays}>
-                  <SelectTrigger>
+                  <SelectTrigger id="share-expiry">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -216,7 +236,8 @@ export function ShareDialog({
               <Label htmlFor="allow-upload">Allow uploading files</Label>
               <Switch
                 id="allow-upload"
-                checked={upload}
+                disabled={fileId !== "project"}
+                checked={fileId === "project" && upload}
                 onCheckedChange={setUpload}
               />
             </div>
@@ -229,51 +250,13 @@ export function ShareDialog({
           </form>
         )}
         <Separator />
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium">Existing links</h3>
-          {shares.error && <ErrorBox error={shares.error} />}{" "}
-          {!shares.data?.length && (
-            <p className="text-sm text-muted-foreground">
-              No links created yet.
-            </p>
-          )}
-          {shares.data?.map((s) => (
-            <div
-              key={s.id}
-              className="flex items-center justify-between gap-3 rounded-lg border p-3"
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{s.label}</p>
-                <p className="text-xs text-muted-foreground">
-                  {s.revokedAt
-                    ? "Revoked"
-                    : s.expiresAt && s.expiresAt < Date.now()
-                      ? "Expired"
-                      : `${s.permission} · ${s.expiresAt ? `until ${date(s.expiresAt)}` : "no expiry"}`}
-                </p>
-              </div>
-              {!s.revokedAt && (
-                <div className="flex gap-1">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    aria-label="Copy link"
-                    onClick={() => copy(`${location.origin}/s/${s.token}`)}
-                  >
-                    <Copy className="size-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => revoke(s.id)}
-                  >
-                    Revoke
-                  </Button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <ShareLinks
+          shares={shares.data}
+          error={shares.error}
+          files={files}
+          onCopy={copy}
+          onRevoke={revoke}
+        />
       </DialogContent>
     </Dialog>
   );

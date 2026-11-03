@@ -27,6 +27,8 @@ import { ActivityPage } from "@/pages/activity-page";
 import { FileFullPage } from "@/pages/file-full-page";
 import { SettingsPage } from "@/pages/settings-page";
 import { ConnectPage } from "@/pages/connect-page";
+import { BrandMetadata, BrandFooter } from "@/features/branding/brand";
+import { projectSearch } from "@/lib/project-tab";
 import "./styles.css";
 
 function Root() {
@@ -36,14 +38,29 @@ function Root() {
       s.location.pathname === "/connect" ||
       s.location.pathname.startsWith("/preview/"),
   });
-  return shared ? <Outlet /> : <Authenticated />;
+  return (
+    <>
+      <BrandMetadata />
+      {shared ? (
+        <>
+          <Outlet />
+          <BrandFooter />
+        </>
+      ) : (
+        <Authenticated />
+      )}
+    </>
+  );
 }
 function Authenticated() {
   const me = useMe();
   if (me.isPending) return <Loading />;
   if (me.error)
     return me.error instanceof ApiError && me.error.status === 401 ? (
-      <AuthPage />
+      <>
+        <AuthPage />
+        <BrandFooter />
+      </>
     ) : (
       <div className="p-8">
         <ErrorBox error={me.error} />
@@ -80,6 +97,7 @@ const routes = [
   createRoute({
     getParentRoute: () => root,
     path: "/projects/$projectId",
+    validateSearch: projectSearch,
     component: () => {
       const { projectId } = useRouterState({
         select: (s) => s.matches.at(-1)!.params,
@@ -90,6 +108,7 @@ const routes = [
   createRoute({
     getParentRoute: () => root,
     path: "/s/$token",
+    validateSearch: projectSearch,
     component: SharedPage,
   }),
   createRoute({

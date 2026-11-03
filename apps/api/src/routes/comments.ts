@@ -23,6 +23,8 @@ commentsRoutes.post("/api/projects/:projectId/comments", async (c) => {
       fileId: z.string().nullable().default(null),
     }),
   );
+  if (access.fileId && input.fileId !== access.fileId)
+    fail(403, "Feedback is limited to the shared file.");
   let version: number | null = null;
   if (input.fileId) {
     const file = await c.env.platform.db
@@ -64,6 +66,8 @@ commentsRoutes.patch("/api/comments/:commentId", async (c) => {
   if (!comment) fail(404, "Comment not found.");
   const { project, access } = await projectAccess(c, comment.projectId);
   mutable(project, access, "comment");
+  if (access.fileId && comment.fileId !== access.fileId)
+    fail(403, "Feedback is limited to the shared file.");
   if (!access.manage && access.actorKey !== comment.actorKey)
     fail(403, "Only the author or an administrator can resolve this comment.");
   const input = await json(c, z.object({ resolved: z.boolean() }));

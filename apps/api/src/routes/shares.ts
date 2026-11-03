@@ -42,6 +42,8 @@ sharesRoutes.post("/api/projects/:projectId/shares", async (c) => {
     c,
     z.object({
       label: name,
+      fileId: z.string().min(1).nullable().default(null),
+      viewMode: z.enum(["compact", "full"]).default("compact"),
       password,
       permission: z.enum(["view", "comment", "edit"]),
       allowDownload: z.boolean(),
@@ -51,6 +53,16 @@ sharesRoutes.post("/api/projects/:projectId/shares", async (c) => {
   );
   if (input.expiresAt && input.expiresAt <= Date.now())
     fail(400, "Expiry must be in the future.");
+  if (input.fileId) {
+    const file = await c.env.platform.db
+      .select()
+      .from(s.files)
+      .where(eq(s.files.id, input.fileId))
+      .get();
+    if (!file || file.projectId !== project.id)
+      fail(400, "Choose a file from this project.");
+    input.allowUpload = false;
+  }
   const { password: plain, ...values } = input,
     share = {
       ...values,
@@ -157,7 +169,11 @@ sharesRoutes.post("/api/shared/:token/unlock", async (c) => {
     path: "/api",
     maxAge: Math.floor((expiresAt - Date.now()) / 1000),
   });
-  return c.json({ projectId: share.projectId });
+  return c.json({
+    projectId: share.projectId,
+    fileId: share.fileId,
+    viewMode: share.viewMode,
+  });
 });
 sharesRoutes.get("/api/shared/:token/session", async (c) => {
   const share = await c.env.platform.db
@@ -165,7 +181,16 @@ sharesRoutes.get("/api/shared/:token/session", async (c) => {
     .from(s.shares)
     .where(eq(s.shares.token, c.req.param("token")))
     .get();
-  if (!share) fail(404, "Link not found.");
+  if (
+    !share ||
+    share.revokedAt ||
+    (share.expiresAt && share.expiresAt <= Date.now())
+  )
+    fail(404, "This link has expired or been revoked.");
   await projectAccess(c, share.projectId, share.token);
-  return c.json({ projectId: share.projectId });
+  return c.json({
+    projectId: share.projectId,
+    fileId: share.fileId,
+    viewMode: share.viewMode,
+  });
 });

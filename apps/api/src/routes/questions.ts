@@ -26,6 +26,11 @@ questionsRoutes.post("/api/projects/:projectId/questions", async (c) => {
   );
   if (["single", "multiple"].includes(input.type) && input.options.length < 2)
     fail(400, "Add at least two choices.");
+  if (
+    new Set(input.options.map((v) => v.toLowerCase())).size !==
+    input.options.length
+  )
+    fail(400, "Each choice must be different.");
   const q = {
     ...input,
     id: id(),
@@ -46,6 +51,7 @@ questionsRoutes.put("/api/questions/:questionId/answer", async (c) => {
   if (!q) fail(404, "Question not found.");
   const { project, access } = await projectAccess(c, q.projectId);
   mutable(project, access, "comment");
+  if (access.fileId) fail(403, "This link only allows its shared file.");
   const input = await json(
     c,
     z.object({

@@ -4,7 +4,6 @@ import {
   FileSpreadsheet,
   FileCode,
   Image,
-  Layers,
   Loader2,
   AlertCircle,
 } from "lucide-react";
@@ -13,20 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-export function Brand({ small = false }: { small?: boolean }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <Layers className="size-5" />
-      </span>
-      {!small && (
-        <span className="text-lg font-semibold tracking-tight">
-          Sendfold<span className="text-muted-foreground">.</span>
-        </span>
-      )}
-    </div>
-  );
-}
+export { Brand } from "@/features/branding/brand";
 export function FileIcon({
   name,
   className,

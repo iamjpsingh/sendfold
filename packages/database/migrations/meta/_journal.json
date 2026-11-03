@@ -29,6 +29,13 @@
       "when": 1793620700192,
       "tag": "0003_military_may_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1793630510845,
+      "tag": "0004_crazy_black_bolt",
+      "breakpoints": true
     }
   ]
 }

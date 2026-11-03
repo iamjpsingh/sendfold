@@ -135,7 +135,9 @@ export async function projectAccess(
     access: {
       permission: share.permission as Access["permission"],
       allowDownload: share.allowDownload,
-      allowUpload: share.allowUpload,
+      allowUpload: !share.fileId && share.allowUpload,
+      fileId: share.fileId,
+      viewMode: share.viewMode,
       manage: false,
       actorKey: `guest:${guest.id}`,
       name: guest.name,
@@ -182,5 +184,8 @@ export async function fileAccess(c: C) {
     .where(eq(s.files.id, c.req.param("fileId")!))
     .get();
   if (!file) fail(404, "File not found.");
-  return { file, ...(await projectAccess(c, file.projectId)) };
+  const result = await projectAccess(c, file.projectId);
+  if (result.access.fileId && result.access.fileId !== file.id)
+    fail(403, "This link only allows its shared file.");
+  return { file, ...result };
 }

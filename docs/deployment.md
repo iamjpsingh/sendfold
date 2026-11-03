@@ -84,3 +84,9 @@ The local D1/R2 state is separate from `.data/`, which belongs to the Node devel
 ## Connector migration
 
 Apply migration `0003_military_may_parker.sql` and deploy the API before the frontend. Existing users and projects are preserved. This migration adds connection grants and Better Auth OAuth/signing-key tables. No extra secrets or bindings are required. Include the new `.well-known` Pages Function when deploying the frontend so remote clients can discover authorization. On a VPS, forward both `/api/*` and `/.well-known/*` to the Node server. The canonical `APP_ORIGIN` must be the public HTTPS origin.
+
+## Branding and file-sharing update
+
+Apply migration `0004_crazy_black_bolt.sql` before deploying this API, then deploy the frontend. Existing project links remain project-wide; new links can be limited to a single file. This migration adds project links/tasks and share scope/view settings. Branding uses the existing settings table and private object storage; no new services or secrets are needed.
+
+For this installation, the canonical address is `https://sendfold.imapro.in`. Add a custom domain from **Pages → Sendfold → Custom domains** and complete **Activate domain**; Cloudflare creates the DNS record automatically when the zone is on the same account. Wait for **Active / SSL enabled**, then set the Worker `APP_ORIGIN` to that exact address. The production `sendfold.pages.dev` frontend redirects to the custom domain, preserving the path. Other self-hosted installations must use their own origin. Existing browser sessions are scoped to their original host, so sign in again at the new address. Reconnect OAuth clients if they were authorized against the old issuer.

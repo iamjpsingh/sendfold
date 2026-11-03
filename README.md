@@ -1,6 +1,6 @@
 # Sendfold
 
-[Open Sendfold](https://sendfold.pages.dev) · [GitHub](https://github.com/iamjpsingh/sendfold)
+[Open Sendfold](https://sendfold.imapro.in) · [GitHub](https://github.com/iamjpsingh/sendfold)
 
 A private project portal for files, client questions, decisions, and feedback. MIT licensed; self-host on Cloudflare Pages + Workers or a VPS. No hosted authentication subscription is required.
 
@@ -12,9 +12,11 @@ A private project portal for files, client questions, decisions, and feedback. M
 - **Open full view** on every file opens a protected full-width viewer in a new tab, including spreadsheets, PDF, DOCX, images, HTML, and text.
 - Browser PDF and image previews, DOCX rendering, and plain-text previews. Other formats remain downloadable.
 - XLSX editing through Univer OSS: cells, basic formulas, worksheet tabs, a single-editor lease, and saved revisions. Original files stay in history.
-- Password-only guest links, expiry, revocation, view/comment/edit permissions, and independent upload/download controls.
-- Project and file feedback, resolved comments, questions, multiple-choice responses, approvals, CSV response export, and activity history.
-- People management, per-project membership, account disabling, and light/dark/system themes with soft lavender, mint, and peach accents.
+- Password-only links for an entire project or one file, compact/full views, expiry, revocation, view/comment/edit permissions, and independent upload/download controls.
+- Project and file feedback, resolved comments, numbered questions and choices, approvals, CSV response export, and activity history.
+- Project links and tasks, important markers, completion tracking, and filters.
+- Custom installation name, tagline, and logo; optional company attribution in the footer.
+- People management, per-project membership, account disabling, and light/dark/system themes with solid blue actions and subtle backgrounds.
 
 ## Run locally
 
@@ -67,15 +69,16 @@ npm run build
 npm run cf:check -w @sendfold/api
 ```
 
-Tests cover access boundaries, guest permissions, revocation, locked projects, exclusive editing, concurrent revision conflicts, original-file retention, and XLSX round trips. Browser checks are recorded in `docs/verification.md`.
+Tests cover access boundaries, scoped file sharing, guest permissions, revocation, locked projects, branding and logo validation, task permissions, exclusive editing, concurrent revision conflicts, original-file retention, and XLSX round trips. Browser checks are recorded in `docs/verification.md`.
 
 ## Deployment
 
 - [Cloudflare Pages + Worker + D1 + R2](docs/deployment.md)
 - [VPS / Docker](docs/vps.md)
 - [Architecture and security model](docs/architecture.md)
+- [Sharing, tasks, and branding guide](docs/sharing-and-branding.md)
 
-This repository provides deployment configuration. It does not reserve a domain or imply that a public deployment already exists. Hosting costs and quotas are separate from the software license.
+Deployment configuration is included for your own installation. Hosting costs, domains, and quotas are separate from the software license.
 
 ## Current boundaries
 
@@ -85,7 +88,7 @@ HTML previews run in an opaque-origin iframe with network requests restricted. T
 
 Questions and comments are persisted. DOCX/PDF are previewable, not full document editors. Identity supplied by a password guest is self-reported. Closing a guest session and entering again creates a new respondent identity. No transactional email is configured.
 
-The MCP connector supports OAuth browser authorization and project-scoped, expiring access keys. Manage it in **Settings → AI connectors**. It exposes project context, text-file reading/revisions, feedback and questions. PDF/Office extraction, arbitrary binary uploads through MCP, and real-time subscriptions are not included. See the [connection guide](docs/connectors.md) for ChatGPT, Codex, Claude and Gemini CLI setup and verification limits.
+The MCP connector supports OAuth browser authorization and project-scoped, expiring access keys. Manage it in **Settings → AI connections**. It exposes project context, text-file reading/revisions, feedback and questions. PDF/Office extraction, arbitrary binary uploads through MCP, and real-time subscriptions are not included. See the [connection guide](docs/connectors.md) for ChatGPT, Codex, Claude and Gemini CLI setup and verification limits.
 
 ## License
 

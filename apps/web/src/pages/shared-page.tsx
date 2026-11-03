@@ -1,3 +1,5 @@
+import type { SharedSession } from "@sendfold/shared/types";
+import { SharedFile } from "@/features/sharing/shared-file";
 import { useState } from "react";
 import { useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -20,7 +22,7 @@ export function SharedPage() {
   const { token } = useParams({ strict: false }) as { token: string };
   const session = useQuery({
     queryKey: ["guest", token],
-    queryFn: () => api<{ projectId: string }>(`/shared/${token}/session`),
+    queryFn: () => api<SharedSession>(`/shared/${token}/session`),
     retry: false,
   });
   const [busy, setBusy] = useState(false),
@@ -44,15 +46,19 @@ export function SharedPage() {
   if (session.isPending) return <Loading />;
   return (
     <div className="min-h-screen bg-muted/20">
-      <header className="flex items-center justify-between border-b bg-background px-6 py-5">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background px-6 py-5">
         <Brand />
         <span className="flex items-center gap-2 text-xs text-muted-foreground">
           <LockKeyhole className="size-3.5" />
-          Protected project
+          Protected link
         </span>
       </header>
       {session.data ? (
-        <ProjectPage projectId={session.data.projectId} token={token} />
+        session.data.fileId ? (
+          <SharedFile session={session.data} token={token} />
+        ) : (
+          <ProjectPage projectId={session.data.projectId} token={token} />
+        )
       ) : (
         <main className="mx-auto max-w-md px-5 py-20">
           <Card className="shadow-sm">
@@ -60,7 +66,7 @@ export function SharedPage() {
               <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-muted">
                 <LockKeyhole className="size-5" />
               </div>
-              <CardTitle>A little privacy. A lot of possibility.</CardTitle>
+              <CardTitle>Open your shared link</CardTitle>
               <CardDescription>
                 Enter the password shared with you. No account needed.
               </CardDescription>
@@ -73,7 +79,7 @@ export function SharedPage() {
                 <form className="space-y-5" onSubmit={unlock}>
                   {!!error && <ErrorBox error={error} />}
                   <div className="space-y-2">
-                    <Label htmlFor="guest-password">Project password</Label>
+                    <Label htmlFor="guest-password">Link password</Label>
                     <Input
                       id="guest-password"
                       name="password"
@@ -95,7 +101,7 @@ export function SharedPage() {
                     />
                   </div>
                   <Button type="submit" className="w-full" disabled={busy}>
-                    <Busy busy={busy}>Open project</Busy>
+                    <Busy busy={busy}>Open shared work</Busy>
                     <ArrowRight className="size-4" />
                   </Button>
                   <p className="text-xs leading-5 text-muted-foreground">

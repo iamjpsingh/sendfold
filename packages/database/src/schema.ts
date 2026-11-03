@@ -151,6 +151,11 @@ export const shares = sqliteTable(
     token: text("token").notNull().unique(),
     label: text("label").notNull(),
     passwordHash: text("password_hash").notNull(),
+    fileId: text("file_id").references(() => files.id, { onDelete: "cascade" }),
+    viewMode: text("view_mode")
+      .$type<"compact" | "full">()
+      .notNull()
+      .default("compact"),
     permission: text("permission").notNull().default("comment"),
     allowDownload: integer("allow_download", { mode: "boolean" })
       .notNull()
@@ -265,3 +270,5 @@ export type AppUser = typeof user.$inferSelect;
 export * from "./connectors";
 export * from "./oauth-clients";
 export * from "./oauth-tokens";
+
+export * from "./project-items";

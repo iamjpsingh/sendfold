@@ -1,6 +1,6 @@
 # Connect an AI app to Sendfold
 
-Open **Settings → AI connectors** to copy your server URL, create a scoped access key, or revoke a connection. For this installation the URL is `https://sendfold.pages.dev/api/mcp`. Other installations use their own public HTTPS origin followed by `/api/mcp`.
+Open **Settings → AI connections** to copy your server URL, create a scoped access key, or revoke a connection. For this installation the URL is `https://sendfold.imapro.in/api/mcp`. Other installations use their own public HTTPS origin followed by `/api/mcp`.
 
 This is an MCP server. Sendfold does not run an AI model or need an OpenAI, Anthropic or Google API key. Your AI client supplies the model and may have its own subscription or usage fees.
 
@@ -23,7 +23,7 @@ Custom app availability, developer controls and write-tool permissions depend on
 ## Codex
 
 ```sh
-codex mcp add sendfold --url https://sendfold.pages.dev/api/mcp
+codex mcp add sendfold --url https://sendfold.imapro.in/api/mcp
 codex mcp login sendfold --scopes sendfold:read,sendfold:write,offline_access
 ```
 
@@ -32,7 +32,7 @@ If automatic registration does not select DCR, add `--oauth-client-registration 
 For a direct access key, create one in Settings and put it in a private `SENDFOLD_TOKEN` environment variable available to Codex, then add the server using:
 
 ```sh
-codex mcp add sendfold --url https://sendfold.pages.dev/api/mcp --bearer-token-env-var SENDFOLD_TOKEN
+codex mcp add sendfold --url https://sendfold.imapro.in/api/mcp --bearer-token-env-var SENDFOLD_TOKEN
 ```
 
 Choose one authentication method for the server. Do not put keys in committed configuration. See [Codex MCP configuration](https://learn.chatgpt.com/docs/extend/mcp#streamable-http-servers).
@@ -42,7 +42,7 @@ Choose one authentication method for the server. Do not put keys in committed co
 In Claude's custom connector settings, enter the MCP URL and complete the OAuth browser flow. Availability depends on the account and organization. In Claude Code:
 
 ```sh
-claude mcp add --transport http sendfold https://sendfold.pages.dev/api/mcp
+claude mcp add --transport http sendfold https://sendfold.imapro.in/api/mcp
 ```
 
 Open `/mcp` in Claude Code to authenticate. If using a bearer key instead, store it privately and configure the Authorization header using the client's supported secret/environment mechanism. See the [official Claude Code MCP guide](https://code.claude.com/docs/en/mcp).
@@ -55,7 +55,7 @@ Add this to your Gemini CLI `settings.json`:
 {
   "mcpServers": {
     "sendfold": {
-      "httpUrl": "https://sendfold.pages.dev/api/mcp",
+      "httpUrl": "https://sendfold.imapro.in/api/mcp",
       "oauth": {
         "enabled": true,
         "scopes": ["sendfold:read", "sendfold:write", "offline_access"]

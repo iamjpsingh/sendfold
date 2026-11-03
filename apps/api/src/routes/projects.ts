@@ -85,7 +85,33 @@ projectsRoutes.post("/api/projects", async (c) => {
 projectsRoutes.get("/api/projects/:projectId", async (c) => {
   const { project, access } = await projectAccess(c, c.req.param("projectId")),
     db = c.env.platform.db;
-  const [files, comments, questions, activities] = await Promise.all([
+  if (access.fileId) {
+    const file = await db
+      .select()
+      .from(s.files)
+      .where(
+        and(eq(s.files.id, access.fileId), eq(s.files.projectId, project.id)),
+      )
+      .get();
+    if (!file) fail(404, "The shared file is no longer available.");
+    const comments = await db
+      .select()
+      .from(s.comments)
+      .where(eq(s.comments.fileId, file.id))
+      .orderBy(s.comments.createdAt)
+      .all();
+    return c.json({
+      project: { ...project, description: "", client: "" },
+      access,
+      files: [file],
+      comments,
+      questions: [],
+      answers: [],
+      activities: [],
+      items: [],
+    });
+  }
+  const [files, comments, questions, activities, items] = await Promise.all([
     db.select().from(s.files).where(eq(s.files.projectId, project.id)).all(),
     db
       .select()
@@ -97,7 +123,7 @@ projectsRoutes.get("/api/projects/:projectId", async (c) => {
       .select()
       .from(s.questions)
       .where(eq(s.questions.projectId, project.id))
-      .orderBy(s.questions.position)
+      .orderBy(s.questions.position, s.questions.id)
       .all(),
     db
       .select()
@@ -105,6 +131,12 @@ projectsRoutes.get("/api/projects/:projectId", async (c) => {
       .where(eq(s.activities.projectId, project.id))
       .orderBy(desc(s.activities.createdAt))
       .limit(50)
+      .all(),
+    db
+      .select()
+      .from(s.projectItems)
+      .where(eq(s.projectItems.projectId, project.id))
+      .orderBy(s.projectItems.createdAt, s.projectItems.id)
       .all(),
   ]);
   const answers = questions.length
@@ -130,6 +162,7 @@ projectsRoutes.get("/api/projects/:projectId", async (c) => {
     questions,
     answers,
     activities,
+    items,
   });
 });
 projectsRoutes.patch("/api/projects/:projectId", async (c) => {

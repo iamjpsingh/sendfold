@@ -14,6 +14,8 @@ import { sharesRoutes } from "./routes/shares";
 import { commentsRoutes } from "./routes/comments";
 import { questionsRoutes } from "./routes/questions";
 import { adminRoutes } from "./routes/admin";
+import { projectItemsRoutes } from "./routes/project-items";
+import { brandingRoutes } from "./routes/branding";
 import { connectionRoutes } from "./connectors/connections";
 import { serveMcp } from "./connectors/server";
 export const app = new Hono<Env>();
@@ -60,6 +62,8 @@ app.onError((error, c) => {
 });
 
 app.route("/", accountRoutes);
+app.route("/", brandingRoutes);
+app.route("/", projectItemsRoutes);
 app.route("/", connectionRoutes);
 app.route("/", peopleRoutes);
 app.route("/", memberRoutes);

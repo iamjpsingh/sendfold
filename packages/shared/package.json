@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./types": "./src/types.ts"
+    "./types": "./src/types.ts",
+    "./branding": "./src/branding.ts"
   },
   "scripts": {
     "check": "tsc --noEmit"

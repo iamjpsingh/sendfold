@@ -17,11 +17,12 @@ export function Questions({
     const cell = (v: string) =>
       `"${(/^[=+@\-\t\r]/.test(v) ? "'" : "") + v.replaceAll('"', '""')}"`;
     const rows = [
-      ["Question", "Respondent", "Answer"],
-      ...detail.questions.flatMap((q) =>
+      ["Number", "Question", "Respondent", "Answer"],
+      ...detail.questions.flatMap((q, i) =>
         detail.answers
           .filter((a) => a.questionId === q.id)
           .map((a) => [
+            String(i + 1),
             q.prompt,
             a.author,
             Array.isArray(a.value) ? a.value.join("; ") : a.value,
@@ -52,7 +53,11 @@ export function Questions({
             </Button>
           )}
           {detail.access.manage && detail.project.status === "active" && (
-            <AddQuestion projectId={detail.project.id} onChange={onChange} />
+            <AddQuestion
+              projectId={detail.project.id}
+              number={detail.questions.length + 1}
+              onChange={onChange}
+            />
           )}
         </div>
       </div>
@@ -62,10 +67,29 @@ export function Questions({
           <p className="text-sm">No questions yet.</p>
         </div>
       )}
-      {detail.questions.map((q) => (
+      {detail.questions.length > 0 && (
+        <p
+          className="rounded-lg border bg-card px-4 py-3 text-sm text-muted-foreground"
+          aria-live="polite"
+        >
+          {detail.questions.length} questions ·{" "}
+          {
+            detail.questions.filter((q) =>
+              detail.answers.some(
+                (a) =>
+                  a.questionId === q.id &&
+                  a.actorKey === detail.access.actorKey,
+              ),
+            ).length
+          }{" "}
+          of your responses saved
+        </p>
+      )}
+      {detail.questions.map((q, i) => (
         <QuestionCard
           key={q.id}
           question={q}
+          number={i + 1}
           answers={detail.answers.filter((a) => a.questionId === q.id)}
           actorKey={detail.access.actorKey}
           canAnswer={

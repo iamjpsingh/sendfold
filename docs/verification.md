@@ -52,3 +52,13 @@ The spreadsheet editor is a large lazy-loaded dependency. It is excluded from th
 - Browser checked the built Settings connection panel, project selection and read-only defaults.
 - Formatting, TypeScript, source-size checks, tests, production build, Worker dry run and Pages Functions compilation are required before release. Every handwritten source/test file remains at most 300 lines.
 - Vendor setup follows current official documentation. End-to-end approval in the user's actual ChatGPT, Codex, Claude and Gemini accounts has not been performed. Custom connector availability depends on each client and plan. PDF/Office content extraction is not implemented.
+
+## Sharing and branding release — 3 November 2026
+
+- Formatting, TypeScript, all integration tests, XLSX round-trip tests, production build, Worker dry run, and Pages Functions compilation passed. All 124 handwritten source/test files are at most 300 lines.
+- Single-file guest access is checked across metadata, content, history, workbooks, editing leases, comments, upload restrictions, expired/revoked links, and attempts to access other files or project resources.
+- Branding tests cover administrator-only updates, safe logo formats, MIME spoofing, current-logo access, and concurrent partial settings updates. Task tests cover viewer restrictions, guest completion, unsafe links, and locked projects.
+- Built UI verified in a real browser: numbered question creation and answers, task completion and filters, saved branding, sticky header, 390-pixel mobile layout, password-only single-file unlock, and opening an isolated HTML preview in a new tab.
+- Cloudflare Pages reports `sendfold.imapro.in` Active with SSL enabled. Normal DNS and HTTPS return successfully. Production login, session lookup, and OAuth discovery on the custom origin passed.
+- Backed up production D1, applied migration `0004_crazy_black_bolt.sql`, and deployed API version `41a9185a-85ee-4f18-9734-7f0e115f82b8`.
+- Single-file shares deliberately exclude sibling HTML assets; use a whole-project share for multi-file HTML folders. Unrecognized formats have a full-view fallback and permitted downloads.

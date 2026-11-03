@@ -1,5 +1,4 @@
 import { useEditorState } from "@/features/files/editor-state";
-import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
@@ -7,17 +6,14 @@ import {
   Files,
   MessageSquare,
   ClipboardCheck,
-  Search,
-  FolderOpen,
+  ListTodo,
   LockKeyhole,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProject } from "@/lib/queries";
 import { patch } from "@/lib/api";
-import { cn } from "@/lib/utils";
-import { Loading, ErrorBox, Status, FileIcon } from "@/components/common";
+import { Loading, ErrorBox, Status } from "@/components/common";
 
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Select,
@@ -27,10 +23,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UploadDialog } from "@/features/files/upload-dialog";
-import { FilePreview } from "@/features/files/file-preview";
+import { ProjectFiles } from "@/features/files/project-files";
+import { useProjectTab } from "@/lib/project-tab";
 import { ProjectMembers } from "@/features/people/project-members";
 import { ShareDialog } from "@/features/sharing/share-dialog";
 import { Comments } from "@/features/feedback/comments";
+import { ProjectItems } from "@/features/project-items/project-items";
 import { Questions } from "@/features/feedback/questions";
 export function ProjectPage({
   projectId,
@@ -41,9 +39,8 @@ export function ProjectPage({
 }) {
   const { editing } = useEditorState();
   const detail = useProject(projectId, token),
-    query = useQueryClient(),
-    [selected, setSelected] = useState<string>(),
-    [search, setSearch] = useState("");
+    query = useQueryClient();
+  const [tab, setTab] = useProjectTab(projectId, token);
   function refresh() {
     void query.invalidateQueries({ queryKey: ["project", projectId] });
     void query.invalidateQueries({ queryKey: ["projects"] });
@@ -67,11 +64,7 @@ export function ProjectPage({
       </div>
     );
   const data = detail.data,
-    { project, access, files } = data,
-    file = files.find((f) => f.id === selected) ?? files[0],
-    visible = files.filter((f) =>
-      f.path.toLowerCase().includes(search.toLowerCase()),
-    );
+    { project, access, files } = data;
   return (
     <main className="mx-auto max-w-[1600px] space-y-6 p-5 md:p-8">
       {!token && (
@@ -108,6 +101,7 @@ export function ProjectPage({
           {access.manage && (
             <ShareDialog
               projectId={project.id}
+              files={files}
               locked={project.status !== "active"}
             />
           )}
@@ -120,9 +114,9 @@ export function ProjectPage({
           responses.
         </div>
       )}
-      <Tabs defaultValue="files" className="space-y-5">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
-          <TabsList>
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:inline-flex sm:w-auto">
             <TabsTrigger value="files">
               <Files className="size-4" />
               Files{" "}
@@ -132,16 +126,33 @@ export function ProjectPage({
             </TabsTrigger>
             <TabsTrigger value="questions" disabled={editing}>
               <ClipboardCheck className="size-4" />
-              Questions
+              Questions{" "}
+              <span className="text-xs text-muted-foreground">
+                {data.questions.length}
+              </span>
             </TabsTrigger>
             <TabsTrigger value="feedback" disabled={editing}>
               <MessageSquare className="size-4" />
-              Feedback
+              Feedback{" "}
+              <span className="text-xs text-muted-foreground">
+                {data.comments.filter((c) => !c.fileId).length}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="items" disabled={editing}>
+              <ListTodo className="size-4" />
+              Links & tasks{" "}
+              <span className="text-xs text-muted-foreground">
+                {data.items?.length ?? 0}
+              </span>
             </TabsTrigger>
           </TabsList>
           {access.manage && (
             <Select value={project.status} onValueChange={status}>
-              <SelectTrigger className="w-36" disabled={editing}>
+              <SelectTrigger
+                className="w-36"
+                disabled={editing}
+                aria-label="Project status"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -153,73 +164,10 @@ export function ProjectPage({
           )}
         </div>
         <TabsContent value="files">
-          {!files.length ? (
-            <div className="flex min-h-96 flex-col items-center justify-center gap-4 rounded-xl border border-dashed">
-              <FolderOpen className="size-10 text-muted-foreground" />
-              <div className="text-center">
-                <h2 className="font-medium">Make room for good work</h2>
-                <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-                  Add a proposal, a spreadsheet, or an entire website folder to
-                  start the conversation.
-                </p>
-              </div>
-              {access.allowUpload && project.status === "active" && (
-                <UploadDialog
-                  projectId={project.id}
-                  token={token}
-                  onChange={refresh}
-                />
-              )}
-            </div>
-          ) : (
-            <div className="grid items-start gap-5 xl:grid-cols-[230px_minmax(0,1fr)]">
-              <aside className="rounded-lg border bg-background p-3">
-                <div className="relative mb-3">
-                  <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Find a file…"
-                    aria-label="Find a file"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-8"
-                  />
-                </div>
-                <div className="max-h-56 space-y-1 overflow-auto xl:max-h-[65vh]">
-                  {visible.map((f) => (
-                    <button
-                      key={f.id}
-                      title={f.path}
-                      disabled={editing && f.id !== file?.id}
-                      onClick={() => setSelected(f.id)}
-                      className={cn(
-                        "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2.5 text-left hover:bg-muted",
-                        file?.id === f.id && "bg-accent",
-                      )}
-                    >
-                      <FileIcon name={f.name} />
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-medium">{f.name}</p>
-                        {f.path !== f.name && (
-                          <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
-                            {f.path.slice(0, -f.name.length - 1)}
-                          </p>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </aside>
-              {file && (
-                <FilePreview
-                  key={file.id}
-                  file={file}
-                  detail={data}
-                  token={token}
-                  onChange={refresh}
-                />
-              )}
-            </div>
-          )}
+          <ProjectFiles data={data} token={token} refresh={refresh} />
+        </TabsContent>
+        <TabsContent value="items">
+          <ProjectItems detail={data} token={token} onChange={refresh} />
         </TabsContent>
         <TabsContent value="questions">
           <Questions detail={data} token={token} onChange={refresh} />

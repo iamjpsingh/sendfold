@@ -5,17 +5,20 @@ import { FileIcon } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import { Comments } from "../feedback/comments";
 import { VersionHistory } from "./version-history";
+import { ShareDialog } from "../sharing/share-dialog";
 import { FileRenderer } from "./file-renderer";
 export function FilePreview({
   file,
   detail,
   token,
   onChange,
+  full = false,
 }: {
   file: ProjectFile;
   detail: ProjectDetail;
   token?: string;
   onChange: () => void;
+  full?: boolean;
 }) {
   return (
     <div className="min-w-0 space-y-6">
@@ -30,7 +33,7 @@ export function FilePreview({
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {
               <Button size="sm" variant="outline" asChild>
                 <a
@@ -43,6 +46,14 @@ export function FilePreview({
                 </a>
               </Button>
             }
+            {detail.access.manage && (
+              <ShareDialog
+                projectId={detail.project.id}
+                files={detail.files}
+                initialFileId={file.id}
+                locked={detail.project.status !== "active"}
+              />
+            )}
             <VersionHistory
               file={file}
               token={token}
@@ -59,6 +70,7 @@ export function FilePreview({
           </div>
         </div>
         <FileRenderer
+          full={full}
           file={file}
           files={detail.files}
           token={token}

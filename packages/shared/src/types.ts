@@ -47,6 +47,8 @@ export interface ProjectFile {
   updatedAt: number;
 }
 export interface Share {
+  fileId: string | null;
+  viewMode: "compact" | "full";
   id: string;
   projectId: string;
   token: string;
@@ -96,6 +98,8 @@ export interface Activity {
   createdAt: number;
 }
 export interface Access {
+  fileId?: string | null;
+  viewMode?: "compact" | "full";
   permission: Permission;
   allowDownload: boolean;
   allowUpload: boolean;
@@ -110,5 +114,25 @@ export interface ProjectDetail {
   questions: Question[];
   answers: Answer[];
   activities: Activity[];
+  items: ProjectItem[];
   access: Access;
+}
+
+export interface ProjectItem {
+  id: string;
+  projectId: string;
+  type: "link" | "task";
+  title: string;
+  url: string | null;
+  note: string;
+  important: boolean;
+  completed: boolean;
+  author: string;
+  createdAt: number;
+  updatedAt: number;
+}
+export interface SharedSession {
+  projectId: string;
+  fileId: string | null;
+  viewMode: "compact" | "full";
 }
