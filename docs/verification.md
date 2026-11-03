@@ -55,10 +55,15 @@ The spreadsheet editor is a large lazy-loaded dependency. It is excluded from th
 
 ## Sharing and branding release — 3 November 2026
 
-- Formatting, TypeScript, all integration tests, XLSX round-trip tests, production build, Worker dry run, and Pages Functions compilation passed. All 124 handwritten source/test files are at most 300 lines.
+- Formatting, TypeScript, all integration tests, XLSX round-trip tests, production build, Worker dry run, and Pages Functions compilation passed. All 126 handwritten source/test files are at most 300 lines.
 - Single-file guest access is checked across metadata, content, history, workbooks, editing leases, comments, upload restrictions, expired/revoked links, and attempts to access other files or project resources.
 - Branding tests cover administrator-only updates, safe logo formats, MIME spoofing, current-logo access, and concurrent partial settings updates. Task tests cover viewer restrictions, guest completion, unsafe links, and locked projects.
 - Built UI verified in a real browser: numbered question creation and answers, task completion and filters, saved branding, sticky header, 390-pixel mobile layout, password-only single-file unlock, and opening an isolated HTML preview in a new tab.
 - Cloudflare Pages reports `sendfold.imapro.in` Active with SSL enabled. Normal DNS and HTTPS return successfully. Production login, session lookup, and OAuth discovery on the custom origin passed.
 - Backed up production D1, applied migration `0004_crazy_black_bolt.sql`, and deployed API version `41a9185a-85ee-4f18-9734-7f0e115f82b8`.
 - Single-file shares deliberately exclude sibling HTML assets; use a whole-project share for multi-file HTML folders. Unrecognized formats have a full-view fallback and permitted downloads.
+
+- GitHub Actions passed for release commit `e509568`; Pages deployed it successfully as `baf2a7c5-5e42-4a7f-8ace-6cd9f6b42d84`. The live browser verified administrator sign-in and the Branding settings.
+- Production D1/R2 integration passed: uploading HTML/text, password-only single-file and whole-project access, denial of sibling-file access, task completion, approval answers, and immediate share revocation. Synthetic test data is removed after verification.
+- Replaced the unsupported domain rule in `_redirects` with configurable Pages middleware. Regression coverage verifies path/query preservation, permanent method-preserving redirects, and no redirects for custom, preview, localhost, or self-targeting origins.
+- API deployment works through Wrangler. Worker Git auto-deploy is still unconnected: the available login lacks Workers Builds access (403), and the existing dashboard browser session could not be controlled. Pages Git auto-deploy is working. The deployment guide contains the exact backend build settings for completing this account-level step.

@@ -3,6 +3,10 @@
   "name": "sendfold",
   "pages_build_output_dir": "./dist",
   "compatibility_date": "2026-11-02",
+  "vars": {
+    "REDIRECT_HOST": "sendfold.pages.dev",
+    "CANONICAL_ORIGIN": "https://sendfold.imapro.in"
+  },
   "services": [
     {
       "binding": "API",
