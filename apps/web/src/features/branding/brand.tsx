@@ -55,6 +55,15 @@ export function BrandMetadata() {
       ? `${branding.name} — ${branding.tagline}`
       : branding.name;
   }, [branding.name, branding.tagline]);
+  useEffect(() => {
+    const icon = document.querySelector<HTMLLinkElement>("#sendfold-favicon");
+    if (!icon) return;
+    if (branding.logoId) icon.removeAttribute("type");
+    else icon.type = "image/svg+xml";
+    icon.href = branding.logoId
+      ? `/api/branding/logo/${branding.logoId}`
+      : "/favicon.svg";
+  }, [branding.logoId]);
   return null;
 }
 export function BrandFooter({ preview }: { preview?: Branding }) {

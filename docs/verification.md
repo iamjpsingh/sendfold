@@ -83,3 +83,11 @@ The spreadsheet editor is a large lazy-loaded dependency. It is excluded from th
 - Backed up production D1, applied migration `0005_gray_black_queen.sql`, and deployed API version `8ff9b897-3edc-4416-ae99-23f29861b188`.
 - Production checks passed for two synthetic guest respondents, Cloudflare IP/country capture, ignored spoofed forwarding metadata, full-view/download/comment events, admin-only endpoints, visitor search, retained identity after share revocation, and legacy activity. The existing project still has four saved responses.
 - Earlier events do not gain invented IPs or identities. Guest identity is self-reported; loads are coalesced to limit polling noise. Responses show current answers; the history records answer-save events, not previous answer values. See [the feature's scope and storage behavior](activity-history.md).
+
+## Visitor tables and favicon — 4 November 2026
+
+- Replaced event/visitor cards with shadcn tables, sticky headers/actions, country flags, parsed device/browser/OS labels and row details dialogs. Added server-side type/country filters, visitor last-activity filtering and activity-count sorting, plus visitor-page CSV export.
+- Added a default favicon and dynamic use of the installation logo. The default icon was visible in the browser preview; the configured logo URL is reused when present.
+- Formatting, TypeScript, all 20 tests, production builds, Worker dry run and Pages Functions compilation passed. New integration coverage checks filtering before pagination, latest visitor metadata, lifetime counts/timestamps, stable visitor ordering, unknown countries and invalid filters.
+- Real browser checks with clearly marked synthetic local data covered event details, visitor rows, an India filter and the 393-pixel iPhone viewport. The table scrolls within its container and keeps row actions available on narrow screens.
+- No database migration, new Cloudflare binding or secret is required. Country/device presentation uses existing records, so earlier missing metadata remains unknown.

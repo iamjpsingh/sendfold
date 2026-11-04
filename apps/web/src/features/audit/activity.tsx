@@ -1,43 +1,74 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Download, RefreshCw, ShieldCheck } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Download, RefreshCw, ShieldCheck, Search, X } from "lucide-react";
 import type { AuditPage } from "@sendfold/shared/audit";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loading, ErrorBox } from "@/components/common";
-import { ActorBadge, Timestamp, Stat, exportCsv } from "./common";
+import { exportCsv } from "./common";
 import { Visitors } from "./visitors";
+import { EventsTable } from "./events-table";
+import {
+  FilterSelect,
+  identityOptions,
+  countryOptions,
+  periodOptions,
+} from "./filter-select";
 
 export function ProjectActivity({ projectId }: { projectId: string }) {
+  const cache = useQueryClient();
   const [view, setView] = useState("events"),
     [search, setSearch] = useState(""),
     [action, setAction] = useState("all"),
+    [kind, setKind] = useState("all"),
+    [country, setCountry] = useState("all"),
     [actor, setActor] = useState(""),
     [period, setPeriod] = useState("all"),
     [cursors, setCursors] = useState<string[]>([]);
   const params = new URLSearchParams({ search });
   if (action !== "all") params.set("action", action);
+  if (kind !== "all") params.set("kind", kind);
+  if (country !== "all") params.set("country", country);
   if (actor) params.set("actor", actor);
   if (period !== "all")
     params.set("from", String(Date.now() - Number(period) * 86400000));
   const cursor = cursors.at(-1);
   if (cursor) params.set("cursor", cursor);
   const result = useQuery({
-    queryKey: ["audit", projectId, search, action, actor, period, cursor],
+    queryKey: [
+      "audit",
+      projectId,
+      search,
+      action,
+      kind,
+      country,
+      actor,
+      period,
+      cursor,
+    ],
     queryFn: () => api<AuditPage>(`/projects/${projectId}/audit?${params}`),
     refetchInterval: cursor ? false : 20_000,
   });
   const data = result.data;
-  function reset() {
+  const filtered =
+    !!search ||
+    !!actor ||
+    [action, kind, country, period].some((v) => v !== "all");
+  function change(setter: (value: string) => void) {
+    return (value: string) => {
+      setter(value);
+      setCursors([]);
+    };
+  }
+  function clear() {
+    setSearch("");
+    setAction("all");
+    setKind("all");
+    setCountry("all");
+    setActor("");
+    setPeriod("all");
     setCursors([]);
   }
   function exportPage() {
@@ -74,28 +105,25 @@ export function ProjectActivity({ projectId }: { projectId: string }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 font-semibold">
-            <ShieldCheck className="size-4" />
+            <ShieldCheck className="size-4 text-primary" />
             Activity & visitors
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            An admin-only history of access and actions in this project.
+            Access, actions and people — visible to project administrators.
           </p>
         </div>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => void result.refetch()}
+          onClick={() => {
+            void result.refetch();
+            void cache.invalidateQueries({ queryKey: ["visitors", projectId] });
+          }}
         >
           <RefreshCw className="size-4" />
           Refresh
         </Button>
       </div>
-      {data && (
-        <div className="grid grid-cols-2 gap-3">
-          <Stat label="Matching events" value={data.total} />
-          <Stat label="Recorded visitor identities" value={data.visitorCount} />
-        </div>
-      )}
       <Tabs value={view} onValueChange={setView}>
         <TabsList>
           <TabsTrigger value="events">Event history</TabsTrigger>
@@ -105,79 +133,67 @@ export function ProjectActivity({ projectId }: { projectId: string }) {
           <Visitors
             projectId={projectId}
             onSelect={(key) => {
-              setSearch("");
-              setAction("all");
-              setPeriod("all");
+              clear();
               setActor(key);
-              reset();
               setView("events");
             }}
           />
         </TabsContent>
         <TabsContent value="events" className="space-y-4 pt-4">
-          <div className="grid gap-3 sm:grid-cols-[1fr_180px_150px]">
-            <Input
-              aria-label="Search activity"
-              value={search}
-              maxLength={120}
-              placeholder="Search person, email, IP or action details…"
-              onChange={(e) => {
-                setSearch(e.target.value);
-                reset();
-              }}
-            />
-            <Select
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-6">
+            <div className="relative sm:col-span-2">
+              <Search
+                className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <Input
+                aria-label="Search activity"
+                value={search}
+                maxLength={120}
+                className="pl-9"
+                placeholder="Search name, email, IP or details…"
+                onChange={(e) => change(setSearch)(e.target.value)}
+              />
+            </div>
+            <FilterSelect
+              label="Filter action"
               value={action}
-              onValueChange={(v) => {
-                setAction(v);
-                reset();
-              }}
-            >
-              <SelectTrigger aria-label="Filter action">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All actions</SelectItem>
-                {data?.actions.map((a) => (
-                  <SelectItem key={a} value={a}>
-                    {a}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
+              onChange={change(setAction)}
+              options={[
+                ["all", "All actions"],
+                ...(data?.actions ?? []).map((a) => [a, a]),
+              ]}
+            />
+            <FilterSelect
+              label="Filter visitor type"
+              value={kind}
+              onChange={change(setKind)}
+              options={identityOptions}
+            />
+            <FilterSelect
+              label="Filter country"
+              value={country}
+              onChange={change(setCountry)}
+              options={countryOptions(data?.countries ?? [])}
+            />
+            <FilterSelect
+              label="Filter time"
               value={period}
-              onValueChange={(v) => {
-                setPeriod(v);
-                reset();
-              }}
-            >
-              <SelectTrigger aria-label="Filter time">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All time</SelectItem>
-                <SelectItem value="1">Last 24 hours</SelectItem>
-                <SelectItem value="7">Last 7 days</SelectItem>
-                <SelectItem value="30">Last 30 days</SelectItem>
-              </SelectContent>
-            </Select>
+              onChange={change(setPeriod)}
+              options={periodOptions}
+            />
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
-              {actor ? "Showing one visitor’s history" : "Showing all visitors"}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground" aria-live="polite">
+              {data?.total ?? 0} matching{" "}
+              {data?.total === 1 ? "event" : "events"}
+              {actor ? " · One visitor selected" : " · All visitors"}
             </p>
             <div className="flex gap-2">
-              {actor && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setActor("");
-                    reset();
-                  }}
-                >
-                  Clear visitor filter
+              {filtered && (
+                <Button variant="ghost" size="sm" onClick={clear}>
+                  <X className="size-3.5" />
+                  Reset filters
                 </Button>
               )}
               <Button
@@ -186,7 +202,7 @@ export function ProjectActivity({ projectId }: { projectId: string }) {
                 disabled={!data?.events.length}
                 onClick={exportPage}
               >
-                <Download className="size-4" />
+                <Download className="size-3.5" />
                 Export this page
               </Button>
             </div>
@@ -197,93 +213,54 @@ export function ProjectActivity({ projectId }: { projectId: string }) {
             <ErrorBox error={result.error} />
           ) : (
             <>
-              <div className="space-y-3">
-                {data?.events.map((e) => (
-                  <article
-                    key={e.id}
-                    className="space-y-3 rounded-lg border bg-card p-4"
+              <EventsTable
+                events={data?.events ?? []}
+                onSelect={change(setActor)}
+              />
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+                <span>
+                  {data?.events.length
+                    ? `${cursors.length * 50 + 1}–${cursors.length * 50 + data.events.length} of ${data.total} events`
+                    : "No matching events"}{" "}
+                  · Times are local
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!cursors.length}
+                    onClick={() => setCursors(cursors.slice(0, -1))}
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Button
-                          variant="link"
-                          className="h-auto p-0 font-medium"
-                          onClick={() => {
-                            setActor(e.actorKey);
-                            reset();
-                          }}
-                        >
-                          {e.actorName}
-                        </Button>
-                        <ActorBadge kind={e.actorKind} />
-                        <span className="text-sm">{e.action}</span>
-                      </div>
-                      <Timestamp value={e.createdAt} />
-                    </div>
-                    <p className="whitespace-pre-wrap break-words text-sm">
-                      {e.detail}
-                    </p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span>{e.actorEmail || "Email not provided"}</span>
-                      <span className="font-mono">
-                        {e.ipAddress || "IP not recorded"}
-                      </span>
-                      {e.country && <span>{e.country}</span>}
-                      {e.shareLabel && <span>Link: {e.shareLabel}</span>}
-                    </div>
-                    <details className="text-xs">
-                      <summary className="cursor-pointer text-muted-foreground">
-                        Browser & record details
-                      </summary>
-                      <p className="mt-2 break-words">
-                        {e.userAgent || "Browser not recorded"}
-                      </p>
-                      <p className="mt-1 break-all text-muted-foreground">
-                        Record {e.id}
-                        {e.resourceId ? ` · Resource ${e.resourceId}` : ""}
-                      </p>
-                    </details>
-                  </article>
-                ))}
-              </div>
-              {!data?.events.length && (
-                <p className="py-10 text-center text-sm text-muted-foreground">
-                  No activity matches these filters.
-                </p>
-              )}
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!cursors.length}
-                  onClick={() => setCursors(cursors.slice(0, -1))}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!data?.nextCursor}
-                  onClick={() =>
-                    data?.nextCursor &&
-                    setCursors([...cursors, data.nextCursor])
-                  }
-                >
-                  Next
-                </Button>
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!data?.nextCursor}
+                    onClick={() =>
+                      data?.nextCursor &&
+                      setCursors([...cursors, data.nextCursor])
+                    }
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
             </>
           )}
         </TabsContent>
       </Tabs>
-      <p className="text-xs leading-5 text-muted-foreground">
-        Earlier activity is preserved with unknown identity/IP where it was not
-        recorded. Repeated project/file loads are grouped into five-minute
-        windows; blocked password attempts are grouped per minute. Downloads
-        record requests, not proof that a person read or saved the file.
-        Activity inside uploaded HTML, typing and other websites is not
-        recorded.
-      </p>
+      <details className="text-xs leading-5 text-muted-foreground">
+        <summary className="w-fit cursor-pointer">About these records</summary>
+        <p className="mt-2 max-w-4xl">
+          Earlier activity keeps unknown details where they were not recorded.
+          Repeated project/file loads are grouped into five-minute windows;
+          blocked password attempts are grouped per minute. Downloads record
+          requests, not proof of reading. Activity inside uploaded HTML and
+          typing is not recorded. Device labels are inferred from the reported
+          browser.
+        </p>
+      </details>
     </section>
   );
 }

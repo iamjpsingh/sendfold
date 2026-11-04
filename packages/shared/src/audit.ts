@@ -36,10 +36,12 @@ export interface AuditPage {
   visitorCount: number;
   firstRecordedAt: number | null;
   actions: string[];
+  countries: string[];
 }
 export interface VisitorsPage {
   visitors: AuditVisitor[];
   total: number;
+  countries: string[];
 }
 export interface ResponseRecord {
   id: string;

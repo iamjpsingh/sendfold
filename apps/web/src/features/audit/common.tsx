@@ -3,7 +3,13 @@ import { Badge } from "@/components/ui/badge";
 import { csv } from "@/lib/csv";
 import { downloadBlob } from "@/lib/api";
 
-export function ActorBadge({ kind }: { kind: ActorKind }) {
+export function ActorBadge({
+  kind,
+  compact = false,
+}: {
+  kind: ActorKind;
+  compact?: boolean;
+}) {
   const labels: Record<ActorKind, string> = {
     member: "Team account",
     guest: "Guest · self-reported",
@@ -12,8 +18,20 @@ export function ActorBadge({ kind }: { kind: ActorKind }) {
     legacy: "Earlier record",
   };
   return (
-    <Badge variant="secondary" className="font-normal">
-      {labels[kind] ?? kind}
+    <Badge
+      variant="secondary"
+      className="bg-primary/5 text-[10px] font-normal text-muted-foreground"
+      title={labels[kind]}
+    >
+      {compact
+        ? ({
+            member: "Team",
+            guest: "Guest",
+            anonymous: "Anonymous",
+            connector: "AI",
+            legacy: "Earlier",
+          }[kind] ?? kind)
+        : (labels[kind] ?? kind)}
     </Badge>
   );
 }

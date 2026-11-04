@@ -99,6 +99,9 @@ function BrandingForm({ initial }: { initial: Branding }) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="brand-logo">Logo</Label>
+              <p className="text-xs text-muted-foreground">
+                Also used as the browser tab icon. A square image works best.
+              </p>
               <div className="flex flex-wrap items-center gap-3">
                 <Input
                   id="brand-logo"

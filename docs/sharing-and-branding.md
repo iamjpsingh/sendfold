@@ -32,3 +32,5 @@ The footer links to the open-source repository by default. Enable the custom cre
 - A storage/backup dashboard with restore checks and retention controls.
 
 These are suggestions, not features in this release. Live simultaneous spreadsheet editing and full Excel fidelity are also outside the current release; editing uses a lease and revision checks.
+
+The browser tab now has a default Sendfold favicon. When an installation logo is uploaded in Settings → Branding, that same image becomes the favicon; removing the logo restores the default. Square PNG/WebP/JPEG images work best for a clear small icon.

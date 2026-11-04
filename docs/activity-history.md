@@ -25,3 +25,9 @@ Project/file loads are grouped per actor/resource into five-minute windows to av
 History has no automatic expiry and is retained with the project in the existing D1/SQLite database. Project deletion cascades to its history. Database operators can modify it; this is not a tamper-evident ledger. There is no new external analytics service or Cloudflare binding. Database storage and request quotas still apply.
 
 Only the private Cloudflare adapter trusts edge IP headers; it ignores arbitrary `X-Forwarded-For`. The IPv6 companion is used only with a Class E pseudo-IPv4 address, and Cloudflare's cross-zone Worker sentinel is stored as unknown. See [Cloudflare's header reference](https://developers.cloudflare.com/fundamentals/reference/http-headers/). On a VPS, the Node adapter records the socket peer, so behind a reverse proxy this is the proxy address; forwarded headers are deliberately not trusted by default.
+
+## Table controls and device details
+
+Event history and visitors use scrollable tables with sticky headers, country flags, device icons, and a details dialog for each row. Country names and flags are rendered locally. Browser/OS/device labels use the MIT-licensed [Bowser parser](https://github.com/bowser-js/bowser) on the already recorded user-agent; no external analytics or device fingerprinting is added. Unknown data remains visibly unknown.
+
+Both tables filter visitor type and country on the server before pagination. Events also filter action and time. Visitors filter last activity and sort by recent activity or lifetime event count. Visitor location/IP filters use the latest recorded metadata; event-history filters can find earlier locations. A visitor's first seen, last seen and event count always refer to their complete project history. Both tables export the displayed page as CSV.

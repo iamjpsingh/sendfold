@@ -1,13 +1,17 @@
 import { Hono } from "hono";
-import { and, eq, desc, sql, or, lt, inArray } from "drizzle-orm";
+import { and, eq, desc, sql, or, lt } from "drizzle-orm";
 import { z } from "zod";
 import { auditEvents as events } from "@sendfold/database/schema";
 import { type Env, fail, json, fileAccess } from "../context";
 import { audit } from "./record";
 import { requireProjectAdmin } from "./access";
+import { identityFilters, projectCountries, countryCondition } from "./filters";
+import { visitorRoutes } from "./visitors";
 
 export const auditRoutes = new Hono<Env>();
+auditRoutes.route("/", visitorRoutes);
 const filters = z.object({
+  ...identityFilters,
   actor: z.string().max(120).optional(),
   action: z.string().max(80).optional(),
   search: z.string().max(120).default(""),
@@ -35,6 +39,8 @@ auditRoutes.get("/api/projects/:projectId/audit", async (c) => {
   const condition = and(
     eq(events.projectId, project.id),
     input.actor ? eq(events.actorKey, input.actor) : undefined,
+    input.kind ? eq(events.actorKind, input.kind) : undefined,
+    countryCondition(input.country),
     input.action ? eq(events.action, input.action) : undefined,
     input.from !== undefined
       ? sql`${events.createdAt} >= ${input.from}`
@@ -46,7 +52,7 @@ auditRoutes.get("/api/projects/:projectId/audit", async (c) => {
       ? sql`instr(lower(${events.actorName} || ' ' || coalesce(${events.actorEmail}, '') || ' ' || coalesce(${events.ipAddress}, '') || ' ' || ${events.detail}), ${input.search.toLowerCase()}) > 0`
       : undefined,
   );
-  const [rows, count, summary, actions] = await Promise.all([
+  const [rows, count, summary, actions, countries] = await Promise.all([
     db
       .select()
       .from(events)
@@ -83,6 +89,7 @@ auditRoutes.get("/api/projects/:projectId/audit", async (c) => {
       .where(eq(events.projectId, project.id))
       .orderBy(events.action)
       .all(),
+    projectCountries(db, project.id),
   ]);
   const page = rows.slice(0, 50),
     last = page.at(-1);
@@ -95,74 +102,8 @@ auditRoutes.get("/api/projects/:projectId/audit", async (c) => {
     total: count?.total ?? 0,
     ...summary,
     actions: actions.map((x) => x.action),
+    countries,
   });
-});
-
-auditRoutes.get("/api/projects/:projectId/visitors", async (c) => {
-  const { project } = await requireProjectAdmin(c, c.req.param("projectId"));
-  const input = z
-    .object({
-      offset: z.coerce.number().int().min(0).max(1000000).default(0),
-      search: z.string().max(120).default(""),
-    })
-    .parse(c.req.query());
-  const db = c.env.platform.db;
-  const condition = and(
-    eq(events.projectId, project.id),
-    input.search
-      ? sql`instr(lower(${events.actorName} || ' ' || coalesce(${events.actorEmail}, '') || ' ' || coalesce(${events.ipAddress}, '')), ${input.search.toLowerCase()}) > 0`
-      : undefined,
-  );
-  const groups = await db
-    .select({
-      actorKey: events.actorKey,
-      firstSeen: sql<number>`min(${events.createdAt})`,
-      lastSeen: sql<number>`max(${events.createdAt})`,
-      eventCount: sql<number>`count(*)`,
-      latestId: sql<string>`(SELECT recent.id FROM audit_events recent WHERE recent.project_id="audit_events"."project_id" AND recent.actor_key="audit_events"."actor_key" ORDER BY recent.created_at DESC, recent.id DESC LIMIT 1)`,
-    })
-    .from(events)
-    .where(condition)
-    .groupBy(events.actorKey)
-    .orderBy(desc(sql`max(${events.createdAt})`), events.actorKey)
-    .limit(50)
-    .offset(input.offset)
-    .all();
-  const latest = groups.length
-    ? await db
-        .select()
-        .from(events)
-        .where(
-          inArray(
-            events.id,
-            groups.map((g) => g.latestId),
-          ),
-        )
-        .all()
-    : [];
-  const visitors = groups.map((g) => {
-    const row = latest.find((e) => e.id === g.latestId)!;
-    return {
-      actorKey: g.actorKey,
-      actorKind: row.actorKind,
-      actorName: row.actorName,
-      actorEmail: row.actorEmail,
-      shareId: row.shareId,
-      shareLabel: row.shareLabel,
-      ipAddress: row.ipAddress,
-      country: row.country,
-      userAgent: row.userAgent,
-      firstSeen: g.firstSeen,
-      lastSeen: g.lastSeen,
-      eventCount: g.eventCount,
-    };
-  });
-  const total = await db
-    .select({ count: sql<number>`count(distinct ${events.actorKey})` })
-    .from(events)
-    .where(condition)
-    .get();
-  return c.json({ visitors, total: total?.count ?? 0 });
 });
 
 auditRoutes.post("/api/files/:fileId/visit", async (c) => {
